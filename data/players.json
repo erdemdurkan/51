@@ -1,0 +1,323 @@
+{
+ "4737475ad8378c347fc2c30c4c032773": {
+  "name": "T0",
+  "gold": 1300,
+  "created": 1794089720315
+ },
+ "0ad1e007f0a1acd628dc8b3acaf7b25c": {
+  "name": "T1",
+  "gold": 1000,
+  "created": 1794089720316
+ },
+ "b6e1999770cd3c56cda378f86e2aafd8": {
+  "name": "T2",
+  "gold": 1000,
+  "created": 1794089720317
+ },
+ "43b6e53d8cb594418b8e11a2b9634c13": {
+  "name": "T3",
+  "gold": 700,
+  "created": 1794089720318
+ },
+ "bf264ccc3d7b14382b44e25883dbe6a6": {
+  "name": "Erdem",
+  "gold": 1000,
+  "created": 1794090016846,
+  "lastDaily": "2026-11-08",
+  "streak": 1
+ },
+ "7293b8afd4a72470ea80a0bb4f32f988": {
+  "name": "Oyuncu",
+  "gold": 1000,
+  "created": 1794090090103,
+  "streak": 1,
+  "lastDaily": "2026-11-08"
+ },
+ "b79d41b595d9d3dae16e39b85ae9374f": {
+  "name": "Oyuncu",
+  "gold": 1000,
+  "created": 1794090094641,
+  "streak": 1,
+  "lastDaily": "2026-11-08"
+ },
+ "7c42c71fe1a155fe6bd1f26329ffb71f": {
+  "name": "Erdem",
+  "gold": 1000,
+  "created": 1794090427338,
+  "streak": 1,
+  "lastDaily": "2026-11-08"
+ },
+ "b1c45f7f20fd38a0f05758a68eb41634": {
+  "name": "Erdem",
+  "gold": 1000,
+  "created": 1794090436144,
+  "streak": 1,
+  "lastDaily": "2026-11-08"
+ },
+ "4499e4c1b76a56fee69ded51904942e7": {
+  "name": "Erdem",
+  "gold": 1000,
+  "created": 1794090445194,
+  "streak": 1,
+  "lastDaily": "2026-11-08"
+ },
+ "a81efb54e27291b6e9ac0c070b254fc4": {
+  "name": "Erdem",
+  "gold": 1000,
+  "created": 1794090453614,
+  "streak": 1,
+  "lastDaily": "2026-11-08"
+ },
+ "be94dbfbaf6a26d8cad3b35717ea1d24": {
+  "name": "Erdem",
+  "gold": 1000,
+  "created": 1794090462039,
+  "streak": 1,
+  "lastDaily": "2026-11-08"
+ },
+ "2bc30617c2333cf31e1c34552704a7fd": {
+  "name": "Erdem",
+  "gold": 1000,
+  "created": 1794090470459,
+  "streak": 1,
+  "lastDaily": "2026-11-08"
+ },
+ "13ba4a5604ef4b1eb352762ef34ad6c3": {
+  "name": "Erdem",
+  "gold": 1000,
+  "created": 1794090478897,
+  "streak": 1,
+  "lastDaily": "2026-11-08"
+ },
+ "31e455a1ecd00d2ab861b72942bde202": {
+  "name": "Erdem",
+  "gold": 1000,
+  "created": 1794090487326,
+  "streak": 1,
+  "lastDaily": "2026-11-08"
+ },
+ "aaa317b77d26085e08c8f43531e2e7e5": {
+  "name": "Erdem",
+  "gold": 1000,
+  "created": 1794090495688,
+  "streak": 1,
+  "lastDaily": "2026-11-08"
+ },
+ "a3c68f4a2b861feeb247b8dcad3c6481": {
+  "name": "Erdem",
+  "gold": 1000,
+  "created": 1794090504061,
+  "streak": 1,
+  "lastDaily": "2026-11-08"
+ },
+ "716c2ec3efb79a2ccba151cdf39671ad": {
+  "name": "Erdem",
+  "gold": 1000,
+  "created": 1794090512471,
+  "streak": 1,
+  "lastDaily": "2026-11-08"
+ },
+ "d4f1abc65229f45bcdde491a706e37df": {
+  "name": "Erdem",
+  "gold": 1000,
+  "created": 1794090634410,
+  "streak": 1,
+  "lastDaily": "2026-11-08"
+ },
+ "30a6cf4164abcd45c56447eb8cf99066": {
+  "name": "Erdem",
+  "gold": 1000,
+  "created": 1794090641500,
+  "streak": 1,
+  "lastDaily": "2026-11-08"
+ },
+ "758dbc2058554ae2584383b39a0c1262": {
+  "name": "Erdem",
+  "gold": 1000,
+  "created": 1794090816176,
+  "streak": 1,
+  "lastDaily": "2026-11-08"
+ },
+ "df8e3b28560158f5081f493504b46c02": {
+  "name": "Erdem",
+  "gold": 1000,
+  "created": 1794090836180,
+  "streak": 1,
+  "lastDaily": "2026-11-08"
+ },
+ "329d2b6336a4d20ccc40374e116958a5": {
+  "name": "Erdem",
+  "gold": 1000,
+  "created": 1794091261335,
+  "streak": 1,
+  "lastDaily": "2026-11-08"
+ },
+ "015c0598be4854fbd9b34cfe721f1599": {
+  "name": "Erdem",
+  "gold": 1000,
+  "created": 1794091345270,
+  "streak": 1,
+  "lastDaily": "2026-11-08"
+ },
+ "bdd84a756fdbf0c9cb908abda346b6c3": {
+  "name": "Erdem",
+  "gold": 1000,
+  "created": 1794091352161,
+  "streak": 1,
+  "lastDaily": "2026-11-08"
+ },
+ "08112d661475bdb831bff7f88a8e57ee": {
+  "name": "Erdem",
+  "gold": 1000,
+  "created": 1794091414556,
+  "streak": 1,
+  "lastDaily": "2026-11-08"
+ },
+ "293c4eb207e565527e729aa85e55be7b": {
+  "name": "Erdem",
+  "gold": 1000,
+  "created": 1794091421460,
+  "streak": 1,
+  "lastDaily": "2026-11-08"
+ },
+ "053f44d8d4e01c115cf54a64a5514564": {
+  "name": "Erdem",
+  "gold": 1000,
+  "created": 1794091679996,
+  "streak": 1,
+  "lastDaily": "2026-11-08"
+ },
+ "e7fcba65403de9386e1ffd3341646d73": {
+  "name": "Erdem",
+  "gold": 1000,
+  "created": 1794091693026,
+  "streak": 1,
+  "lastDaily": "2026-11-08"
+ },
+ "9f513acefc932836b5155171938a489b": {
+  "name": "Erdem",
+  "gold": 1000,
+  "created": 1794091723900,
+  "streak": 1,
+  "lastDaily": "2026-11-08"
+ },
+ "2db1d0eb368526eb55f4566f7958883f": {
+  "name": "Erdem",
+  "gold": 1000,
+  "created": 1794091771818,
+  "streak": 1,
+  "lastDaily": "2026-11-08"
+ },
+ "0c9b68a7e9051c4a9b81ee3c50adaf05": {
+  "name": "Erdem",
+  "gold": 1000,
+  "created": 1794091815167,
+  "streak": 1,
+  "lastDaily": "2026-11-08"
+ },
+ "c588d1a28f634d0279382fb7537270fa": {
+  "name": "Erdem",
+  "gold": 1000,
+  "created": 1794091827132,
+  "streak": 1,
+  "lastDaily": "2026-11-08"
+ },
+ "d4ffbf90353d22c2d90bdb2ff87adae1": {
+  "name": "Kayit",
+  "gold": 0,
+  "created": 1794092731371,
+  "streak": 0,
+  "lastDaily": null
+ },
+ "c19c9f0caed0109ab6847e67748a7291": {
+  "name": "Erdem",
+  "gold": 1000,
+  "created": 1794097129506,
+  "streak": 1,
+  "lastDaily": "2026-11-08"
+ },
+ "e2c09a080b9fccec5eed88cc86de071f": {
+  "name": "Erdem",
+  "gold": 1000,
+  "created": 1794097164538,
+  "streak": 1,
+  "lastDaily": "2026-11-08"
+ },
+ "983801e24aace30c3e1a1a3306cc1637": {
+  "name": "Erdem",
+  "gold": 1000,
+  "created": 1794097564237,
+  "streak": 1,
+  "lastDaily": "2026-11-08"
+ },
+ "1f009ec1f93f850dc14ba95b3731dfa8": {
+  "name": "Erdem",
+  "gold": 1000,
+  "created": 1794097691462,
+  "streak": 1,
+  "lastDaily": "2026-11-08"
+ },
+ "d61d2c31f4a29c8a61cfea7ab1f98f8f": {
+  "name": "Erdem",
+  "gold": 1000,
+  "created": 1794100525820,
+  "streak": 1,
+  "lastDaily": "2026-11-08"
+ },
+ "8efecaac54f2141cfdccaeb15858404b": {
+  "name": "Erdem",
+  "gold": 1000,
+  "created": 1794100540393,
+  "streak": 1,
+  "lastDaily": "2026-11-08"
+ },
+ "e428ef165f2752dc0f77b38632425f81": {
+  "name": "Erdem",
+  "gold": 1000,
+  "created": 1794100566460,
+  "streak": 1,
+  "lastDaily": "2026-11-08"
+ },
+ "3de2305894bbcc82ac7b4356501b9151": {
+  "name": "Erdem",
+  "gold": 0,
+  "created": 1794167852579,
+  "streak": 0,
+  "lastDaily": null
+ },
+ "b019ce2819563c454b360d6623be40c2": {
+  "name": "Erdem",
+  "gold": 0,
+  "created": 1794167862303,
+  "streak": 0,
+  "lastDaily": null
+ },
+ "3af59792ccaca010615ffb470a8a372d": {
+  "name": "Erdem",
+  "gold": 0,
+  "created": 1794167962968,
+  "streak": 0,
+  "lastDaily": null
+ },
+ "d190baf68a50ef6ab2098cc1744a2692": {
+  "name": "Erdem",
+  "gold": 0,
+  "created": 1794167974105,
+  "streak": 0,
+  "lastDaily": null
+ },
+ "c20e5e67d9d5c084d0a4474d21f1a721": {
+  "name": "Erdem",
+  "gold": 0,
+  "created": 1794168283560,
+  "streak": 0,
+  "lastDaily": null
+ },
+ "d174d3f1a57f09ec6d5dd28b80f2a6ca": {
+  "name": "Erdem",
+  "gold": 0,
+  "created": 1794168297855,
+  "streak": 0,
+  "lastDaily": null
+ }
+}

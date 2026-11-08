@@ -1,0 +1,14 @@
+{
+  "name": "iskambil51",
+  "version": "0.1.0",
+  "description": "Iskambil kağıtlı 51 (okey) - 4 kişilik online",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node test.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "socket.io": "^4.8.1"
+  }
+}
