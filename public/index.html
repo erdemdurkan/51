@@ -48,6 +48,7 @@
 </section>
 
 <section id="lobby" class="screen hidden">
+  <button class="back-btn" id="btnBackTop">← Ana sayfa</button>
   <h2>Oda <span id="lobbyCode" class="code"></span></h2>
   <div class="share">
     <input id="shareLink" readonly>
@@ -72,31 +73,35 @@
 
 <section id="game" class="screen hidden">
   <header id="topbar">
+    <button id="btnExit" class="small" title="Ana sayfaya dön">← Çık</button>
     <span id="gInfo"></span>
     <span class="grow"></span>
+    <span class="zoom" title="Kamera yakınlaştırma (masanın üstünde fare tekerleği de çalışır)"><button id="zOut" class="small" aria-label="Uzaklaş">−</button><button id="zReset" class="small" aria-label="Sıfırla">100%</button><button id="zIn" class="small" aria-label="Yakınlaş">+</button></span>
     <button id="btnResult" class="small hidden">Sonuç</button>
     <button class="small rules-btn" title="Oyun kuralları">📜<span class="rl-t"> Kurallar</span></button>
     <button id="btnScore" class="small">Puanlar</button>
   </header>
   <div id="table">
     <div id="tableBox">
-      <div class="chair c2"></div>
-      <div class="chair c3"></div>
-      <div class="chair c1"></div>
+      <div class="pl" id="pl-top"></div>
+      <div class="pl side" id="pl-left"></div>
+      <div class="pl side" id="pl-right"></div>
       <div id="tableTop">
+        <div class="t-leg t-leg-l"></div>
+        <div class="t-leg t-leg-r"></div>
+        <div class="t-front"></div>
+        <i class="mk mk-t"></i><i class="mk mk-l"></i><i class="mk mk-r"></i>
         <div id="felt">
           <div id="log"></div>
           <div id="discard">
             <div id="spread"></div>
-            <div id="discardHint"></div>
           </div>
+          <div id="discardHint"></div>
           <div id="feltBottom">
             <div id="deck"></div>
             <div id="indicator"></div>
           </div>
         </div>
-        <div class="prop tea"></div>
-        <div class="prop tespih"></div>
       </div>
       <div class="opp" id="opp-top"></div>
       <div class="opp side" id="opp-left"></div>
@@ -141,8 +146,10 @@
 <button id="btnMute" class="mute-fab" aria-label="Ses">🔊</button>
 
 <script src="/socket.io/socket.io.js"></script>
+<script src="vendor/three.min.js"></script>
 <script src="fx.js"></script>
-<script src="scene.js"></script>
+<script src="portrait.js"></script>
+<script src="stage3d.js"></script>
 <script src="rules.js"></script>
 <script src="app.js"></script>
 </body>

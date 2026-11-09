@@ -59,6 +59,7 @@ function emit(ev, data, cb) {
 }
 function show(id) {
   for (const s of ['home', 'lobby', 'game']) $(s).classList.toggle('hidden', s !== id);
+  if (id !== 'game') Stage3D.idle();
 }
 function fillHands(sel) {
   sel.innerHTML = HAND_OPTIONS.map((n) => `<option value="${n}">${n} el</option>`).join('');
@@ -185,7 +186,8 @@ $('btnJoin').onclick = () => {
   const code = $('joinCode').value.trim().toUpperCase();
   if (!name) return;
   if (!code) return toast('Oda kodunu yaz');
-  const token = session && session.code === code ? session.token : undefined;
+  const rj = store.get('i51-rejoin');
+  const token = session && session.code === code ? session.token : rj && rj.code === code ? rj.token : undefined;
   emit('join', { code, name, token, pid }, setSession);
 };
 $('joinCode').addEventListener('keydown', (e) => e.key === 'Enter' && $('btnJoin').click());
@@ -239,11 +241,21 @@ $('lHands').onchange = () => emit('settings', { totalHands: +$('lHands').value }
 $('lFee').onchange = () => emit('settings', { fee: Math.floor(+$('lFee').value || 0) });
 $('lFee').addEventListener('keydown', (e) => e.key === 'Enter' && $('lFee').blur());
 $('btnStart').onclick = () => emit('start', {});
-$('btnLeave').onclick = () => emit('leave', {}, () => {
-  session = null; store.set('i51-session', null); S = null;
-  history.replaceState(null, '', location.pathname);
-  render();
-});
+function leaveRoom() {
+  const inGame = !!(S && S.game);
+  const others = inGame && S.seats.some((p, i) => p && !p.bot && i !== S.mySeat);
+  if (inGame && others && !confirm('Masadan ayrılıyorsun. Koltuğun korunur, aynı linkle geri dönebilirsin. Çıkılsın mı?')) return;
+  if (inGame && !others && !confirm('Oyundan çıkılsın mı? Oyun kaybolur.')) return;
+  emit('leave', {}, () => {
+    store.set('i51-rejoin', others ? session : null); // oyun sürüyorsa aynı koltuğa dönebil
+    session = null; store.set('i51-session', null); S = null;
+    history.replaceState(null, '', location.pathname);
+    render();
+  });
+}
+$('btnLeave').onclick = leaveRoom;
+$('btnBackTop').onclick = leaveRoom;
+$('btnExit').onclick = leaveRoom;
 
 function renderLobby() {
   show('lobby');
@@ -463,7 +475,7 @@ function findGroups(ids, byId) {
 function sizeHand() {
   const W = window.innerWidth;
   const H = window.innerHeight;
-  hw = Math.round(Math.max(40, Math.min(100, W / 5.6, (H * 0.3) / 2.36)));
+  hw = Math.round(Math.max(40, Math.min(100, W / 5.6, (H * 0.25) / 2.36)));
   pw = hw; // masadaki kağıtlar da eldeki kağıt boyutunda
   document.documentElement.style.setProperty('--hw', hw + 'px');
   document.documentElement.style.setProperty('--pw', pw + 'px');
@@ -806,8 +818,10 @@ document.addEventListener('pointermove', (e) => {
   }
   const t = document.elementFromPoint(e.clientX, e.clientY);
   const dz = $('discard');
-  dz.classList.toggle('hover', drag.kind === 'card' && !inHand && !!t && dz.contains(t));
+  dz.classList.toggle('hover', drag.kind === 'card' && !inHand && overFelt(t));
 });
+// Kağıt, çuhanın herhangi bir yerine bırakılınca yığına atılır (defter hariç)
+function overFelt(t) { return !!t && $('felt').contains(t) && !$('notebook').contains(t); }
 function endDrag(e, cancel) {
   if (!drag) return;
   const d = drag;
@@ -823,7 +837,7 @@ function endDrag(e, cancel) {
   if (d.kind === 'card') {
     if (d.gap != null) return moveTo(d.id, d.gap);
     layoutHand();
-    if (t && $('discard').contains(t)) { lastDrop = { id: d.id, rect: dropRect, t: Date.now() }; discardCard(d.id, false); }
+    if (overFelt(t)) { lastDrop = { id: d.id, rect: dropRect, t: Date.now() }; discardCard(d.id, false); }
   } else {
     layoutHand();
     if (d.gap != null) doDraw(d.kind, d.gap);
@@ -860,10 +874,13 @@ $('spread').addEventListener('pointerdown', (e) => {
   e.preventDefault();
   startDrag(e, 'pile', null, c);
 });
-window.addEventListener('resize', () => {
+window.addEventListener('resize', relayout);
+// Boyut değişince (döndürme, pencere) düzen tamamlandıktan sonra bir kez daha hizala
+new ResizeObserver(() => { if (S && S.game && $('table').clientHeight > 0) relayout(); }).observe($('table'));
+function relayout() {
   sizeHand();
-  if (S && S.game) { renderOpps(); layoutTable(); renderSpread(); layoutHand(); renderNotebook(); }
-});
+  if (S && S.game) { renderOpps(); layoutTable(); renderNotebook(); renderSpread(); layoutHand(); }
+}
 sizeHand();
 
 // ---------- Masa ----------
@@ -911,7 +928,7 @@ function renderOpps() {
     const nm0 = nameOf(seat);
     const chair = document.querySelector('.chair.c' + r);
     if (chair) chair.classList.toggle('turn', g.status === 'playing' && g.turn === seat);
-    el.innerHTML = `<div class="avatar">${Scene.portrait(strHash(nm0) + seat * 97, 'pt' + r)}${p && p.bot ? '<i>🤖</i>' : ''}</div><div class="nm">${esc(nm0)}</div><div class="ct">${ct}</div>${tag}<div class="ofan"></div>`;
+    el.innerHTML = `<div class="oinfo"><div class="nm">${p && p.bot ? '🤖 ' : ''}${esc(nm0)}</div><div class="ct">${ct}</div>${tag}</div><div class="ofan"></div>`;
     if (out) el.classList.add('out');
     if (g.shown && g.shown.seat === seat) el.querySelector('.ct').insertAdjacentHTML('beforeend', ' · <span class="shown-tag">🃏 gösterge</span>');
     // kapalı yelpaze
@@ -921,6 +938,7 @@ function renderOpps() {
     const info = (g.backs && g.backs[seat]) || { colors: [] };
     const cols = info.colors.slice().reverse();
     const n = cols.length || g.handCounts[seat];
+    mountPlayer(r, seat, nm0, g.status === 'playing' && g.turn === seat, cols.length ? cols : Array(n).fill('blue'));
     const cw = window.innerWidth < 600 ? 18 : 24;
     const maxW = r === 2 ? Math.min(240, window.innerWidth * 0.5) : window.innerWidth < 600 ? 110 : 150;
     const sp = n > 1 ? Math.min(cw * 0.5, (maxW - cw) / (n - 1)) : 0;
@@ -949,37 +967,156 @@ function renderOpps() {
   $('tableTop').classList.toggle('my-turn', g.status === 'playing' && g.turn === me);
 }
 
-// ---------- Kare masa: rakiplerin yerine göre en büyük kareyi bul ----------
-function layoutTable() {
-  const T = $('table');
-  const box = $('tableBox');
-  const W = T.clientWidth - 12;
-  const H = T.clientHeight - 16; // masanın kalınlığı ve gölgesi için pay
-  if (W <= 0 || H <= 0) return;
-  const th = $('opp-top').offsetHeight;
-  const sw = Math.max($('opp-left').offsetWidth, $('opp-right').offsetWidth);
-  const narrow = window.innerWidth < 600;
-  const rimOf = (s) => Math.round(Math.max(10, s * (narrow ? 0.045 : 0.055)));
-  let S = Math.min(W, H);
-  let ovT = 0;
-  let ovS = 0;
-  for (let k = 0; k < 4; k++) {
-    const rim = rimOf(S);
-    ovT = rim + 22;                              // üstteki oyuncunun kağıtları masanın kenarına değer
-    ovS = rim + Math.round(sw * (narrow ? 0.22 : 0.1));
-    S = Math.floor(Math.min(H - Math.max(0, th - ovT), W - 2 * Math.max(0, sw - ovS)));
+// ---------- Kamera yakınlaştırma ----------
+const ZOOM_MIN = 0.85;
+const zoomMax = () => (window.innerWidth < 600 ? 1 : 1.2); // telefonda yan oyuncular kesilmesin
+let zoom = Math.min(zoomMax(), Math.max(ZOOM_MIN, Number(store.get('i51-zoom')) || 1));
+function setZoom(z) {
+  zoom = Math.min(zoomMax(), Math.max(ZOOM_MIN, Math.round(z * 100) / 100));
+  store.set('i51-zoom', zoom);
+  $('zIn').disabled = zoom >= zoomMax();
+  $('zOut').disabled = zoom <= ZOOM_MIN;
+  $('zReset').textContent = Math.round(zoom * 100) + '%';
+  if (S && S.game) { layoutTable(); renderNotebook(); renderSpread(); renderOpps(); layoutHand(); }
+}
+$('zIn').onclick = () => setZoom(zoom + 0.1);
+$('zOut').onclick = () => setZoom(zoom - 0.1);
+$('zReset').onclick = () => setZoom(1);
+$('table').addEventListener('wheel', (e) => { e.preventDefault(); setZoom(zoom + (e.deltaY < 0 ? 0.05 : -0.05)); }, { passive: false });
+$('zReset').textContent = Math.round(zoom * 100) + '%';
+$('zIn').disabled = zoom >= zoomMax();
+$('zOut').disabled = zoom <= ZOOM_MIN;
+
+// ---------- 3B masa: perspektifte yere oturan geniş masa, etrafında oturan oyuncular ----------
+const PL = [null, 'right', 'top', 'left'];
+const PL_AVATAR = 72; // 3B çalışmazsa 2B portre boyu
+const plLast = {};
+document.body.classList.toggle('p3d', Stage3D.available);
+function mountPlayer(r, seat, name, turn, cols) {
+  const slot = PL[r];
+  const seed = strHash(name) + seat * 97;
+  if (Stage3D.available) {
+    Stage3D.setPlayer(slot, seed, cols, turn, Stage3D.isFemaleName(name));
+    if (plLast[slot] !== undefined && plLast[slot] !== cols.length) Stage3D.act(slot);
+    plLast[slot] = cols.length;
+    return;
   }
-  S = Math.max(150, S);
-  const rim = rimOf(S);
-  box.style.width = box.style.height = S + 'px';
-  box.style.marginTop = Math.max(0, th - ovT) + 'px';
-  box.style.setProperty('--S', S + 'px');
-  box.style.setProperty('--rim', rim + 'px');
-  box.style.setProperty('--ovT', ovT + 'px');
-  box.style.setProperty('--ovS', ovS + 'px');
-  // masadaki kağıtlar kareye sığsın
-  pw = Math.round(Math.max(26, Math.min(hw, (S - 2 * rim) * 0.23)));
+  const host = $('pl-' + slot);
+  host.classList.toggle('turn', turn);
+  if (host.dataset.seed !== String(seed)) {
+    host.dataset.seed = seed;
+    host.innerHTML = `<div class="avatar">${Scene.portrait(seed, 'pt' + r)}</div>`;
+  }
+}
+
+function layoutTable() {
+  const box = $('tableBox');
+  const top = $('tableTop');
+  const W = box.clientWidth;
+  const H = box.clientHeight;
+  if (W <= 0 || H <= 0) return;
+  const narrow = window.innerWidth < 600;
+  const short = window.innerHeight < 560;
+  const p3 = Stage3D.available;
+  const ks = narrow ? 0.62 : 0.85; // oyuncu ölçeği
+  const tilt = narrow ? 36 : 40;
+  const cosT = Math.cos((tilt * Math.PI) / 180);
+  // üstteki oyuncunun masanın arkasında kalan boyu; yan oyuncuların masa kenarından dışarı taşan eni
+  const headRoom = short ? 14 : p3 ? Math.round(H * (narrow ? 0.2 : 0.23)) : PL_AVATAR + 4;
+  const availH = (H - headRoom) / 1.2; // kalan pay masanın kalınlığı ve ayakları
+  const sideRoom = short ? 34 : p3 ? Math.round(0.23 * (availH / cosT) * ks) + 4 : narrow ? 48 : 54;
+  const availW = W - 2 * sideRoom;
+  const aspect = Math.max(0.8, Math.min(1.7, (availW / availH) * cosT));
+  top.style.setProperty('--tilt', tilt + 'deg');
+  box.style.setProperty('--u', ks);
+
+  let TH = availH / cosT;
+  let TW = Math.min(availW, TH * aspect);
+  TH = Math.min(TH, TW / aspect);
+  const apply = () => {
+    const rim = Math.round(Math.max(10, TH * (narrow ? 0.05 : 0.055)));
+    const m = p3 ? Stage3D.metrics(TH) : { thick: Math.round(TH * 0.05), leg: Math.round(TH * 0.13) };
+    top.style.width = TW + 'px';
+    top.style.height = TH + 'px';
+    top.style.left = (W - TW) / 2 + 'px';
+    top.style.setProperty('--S', TH + 'px');
+    top.style.setProperty('--rim', rim + 'px');
+    top.style.setProperty('--T', m.thick + 'px');
+    top.style.setProperty('--L', m.leg + 'px');
+    return rim;
+  };
+  let rim = apply();
+  top.style.top = '0px';
+  for (let i = 0; i < 6; i++) {
+    const rc = top.getBoundingClientRect();
+    const k = Math.min(availW / rc.width, availH / rc.height);
+    if (Math.abs(k - 1) < 0.004) break;
+    TW *= k;
+    TH *= k;
+    rim = apply();
+  }
+  const br = box.getBoundingClientRect();
+  const rc = top.getBoundingClientRect();
+  top.style.top = headRoom - (rc.top - br.top) + 'px';
+  if (zoom !== 1) {
+    // yakınlaş/uzaklaş: masa aynı merkez etrafında büyür, oyuncular 3B'de masayla birlikte hareket eder
+    TW *= zoom;
+    TH *= zoom;
+    rim = apply();
+    top.style.top = '0px';
+    const rc2 = top.getBoundingClientRect();
+    top.style.top = headRoom + rc.height / 2 - rc2.height / 2 + (zoom > 1 ? (zoom - 1) * rc.height * 0.4 : 0) - (rc2.top - br.top) + 'px';
+  }
+
+  // masadaki kağıtlar çuhaya sığsın: orta sıra (deste + gösterge) ve altında yere atılanlar
+  const feltH = TH - 2 * rim;
+  pw = Math.round(Math.max(26, Math.min(hw, (feltH - 96) / 2.85, (TW - 2 * rim) * 0.16)));
   document.documentElement.style.setProperty('--pw', pw + 'px');
+
+  const ot = $('opp-top');
+  const ol = $('opp-left');
+  const or = $('opp-right');
+  const put = (el, x, y) => { el.style.left = Math.round(x) + 'px'; el.style.top = Math.round(y) + 'px'; };
+
+  if (p3) {
+    // 3B sahne, masanın CSS perspektifiyle aynı kamerayı kullanır; oyuncular masa koordinatlarında oturur
+    const cx = br.left + parseFloat(top.style.left) + TW / 2;
+    const cy = br.top + parseFloat(top.style.top) + TH / 2;
+    Stage3D.layout({ vw: window.innerWidth, vh: window.innerHeight, ox: br.left + br.width / 2, oy: br.top + br.height * 0.28, cx, cy, TW, TH, tilt, ks }, false);
+    [[ot, 'top'], [ol, 'left'], [or, 'right']].forEach(([el, slot]) => {
+      const fan = Stage3D.anchor(slot, 'fan');
+      const pill = Stage3D.anchor(slot, 'pill');
+      if (!fan || !pill) return;
+      put(el, fan.x - br.left, fan.y - br.top);
+      const info = el.querySelector('.oinfo');
+      info.style.left = Math.round(pill.x - fan.x) + 'px';
+      info.style.top = Math.round(pill.y - fan.y) + 'px';
+    });
+    return;
+  }
+
+  // 3B çalışmazsa: 2B portreler masanın kenarlarında
+  const pt = (sel) => {
+    const r = top.querySelector(sel).getBoundingClientRect();
+    return { x: r.left - br.left, y: r.top - br.top };
+  };
+  const mt = pt('.mk-t');
+  const ml = pt('.mk-l');
+  const mr = pt('.mk-r');
+  const hosts = { top: $('pl-top'), left: $('pl-left'), right: $('pl-right') };
+  for (const k in hosts) {
+    hosts[k].style.width = PL_AVATAR + 'px';
+    hosts[k].style.height = PL_AVATAR + 'px';
+  }
+  put(hosts.top, mt.x - PL_AVATAR / 2, mt.y - PL_AVATAR - 8);
+  put(ot, mt.x - ot.offsetWidth / 2, mt.y - ot.offsetHeight + 24);
+  const sideShift = narrow ? 22 : 30;
+  [[ol, hosts.left, ml, -1], [or, hosts.right, mr, 1]].forEach(([el, host, m, dir]) => {
+    const cx2 = m.x + dir * sideShift;
+    const y0 = m.y - (PL_AVATAR + el.offsetHeight) / 2;
+    put(host, cx2 - PL_AVATAR / 2, y0);
+    put(el, cx2 - el.offsetWidth / 2, y0 + PL_AVATAR);
+  });
 }
 
 // Bu elde oynayanlar arasında benden önceki oyuncu (finalde 2 kişi)
@@ -993,7 +1130,16 @@ function canTakePile() {
   return myTurn() && g.phase === 'draw' && !!top && top.by === prevActive(S.mySeat) && !isWild(top, g.okey); // yerdeki okey alınamaz
 }
 
-// Ortaya atılan kağıtları sırayla, yan yana (gerekirse birkaç sıra) ser
+// Ortaya atılan kağıtlar: gerçek masadaki gibi tek yığın; her kağıt hafif kaymış ve çapraz durur
+function pileJitter(c) {
+  const r = seeded(strHash(String(c.id)) + 17);
+  return { dx: (r() - 0.5) * 0.3, dy: (r() - 0.5) * 0.24, rot: (r() - 0.5) * 34 };
+}
+// Dönmüş kağıdın uçuş hedefi: sınırlayıcı kutu değil, kağıdın kendi boyutu
+function upright(el) {
+  if (!el) return null;
+  return cardBox(centerOf(el.getBoundingClientRect()), el.offsetWidth);
+}
 function renderSpread() {
   const g = S.game;
   const box = $('spread');
@@ -1002,37 +1148,19 @@ function renderSpread() {
   const n = pile.length;
   const W = box.clientWidth;
   const H = box.clientHeight;
-  // geniş masada sağdaki deftere değmesin
-  const nbRect = $('notebook').getBoundingClientRect();
-  const reserve = nbRect.width ? Math.min(W * 0.35, nbRect.width + 12) : 0;
-  const avail = W - 16 - reserve;
-  // Kağıtlar eldeki boyutta; alana sığmazsa sığana kadar küçült
-  let cw = Math.min(pw, Math.max(18, avail)); // alan darsa kağıt da küçülür
-  let ch, minSp, maxSp, perRow, rows, rowGap;
-  for (;;) {
-    ch = cw * 1.4;
-    minSp = cw * 0.36;
-    maxSp = cw * 0.62;
-    perRow = Math.max(1, Math.floor((avail - cw) / minSp) + 1);
-    rows = Math.max(1, Math.ceil(n / perRow));
-    rowGap = rows > 1 ? Math.max(ch * 0.26, Math.min(ch * 0.6, (H - ch - 20) / (rows - 1))) : 0;
-    if (ch + (rows - 1) * rowGap <= H - 4 || cw <= 18) break;
-    cw -= 2;
-  }
+  const cw = Math.max(18, pw);
+  const ch = cw * 1.4;
   box.style.setProperty('--cw', cw + 'px');
-  const y0 = Math.max(2, (H - (ch + (rows - 1) * rowGap)) / 2 - 8);
   const take = canTakePile();
-  pile.forEach((c, i) => {
-    const row = Math.floor(i / perRow);
-    const k = row < rows - 1 ? perRow : n - row * perRow;
-    const j = i - row * perRow;
-    const sp = k > 1 ? Math.min(maxSp, (avail - cw) / (k - 1)) : 0;
-    const x0 = (W - reserve - (cw + sp * (k - 1))) / 2;
+  pile.slice(-14).forEach((c, k, arr) => {
+    const j = pileJitter(c);
     const el = cardEl(c);
-    el.style.left = x0 + j * sp + 'px';
-    el.style.top = y0 + row * rowGap + 'px';
-    el.style.zIndex = i + 1;
-    if (i === n - 1) {
+    el.style.left = W / 2 - cw / 2 + j.dx * cw + 'px';
+    el.style.top = H / 2 - ch / 2 + j.dy * ch + 'px';
+    el.style.transform = `rotate(${j.rot.toFixed(1)}deg)`;
+    el.dataset.rot = j.rot.toFixed(1);
+    el.style.zIndex = k + 1;
+    if (k === arr.length - 1) {
       el.classList.add('last');
       if (take) el.classList.add('can-take');
     }
@@ -1040,7 +1168,7 @@ function renderSpread() {
   });
   const last = pile[n - 1];
   $('discardHint').textContent = !n
-    ? 'Kağıtlar buraya atılır'
+    ? 'Kağıtlar ortadaki yığına atılır'
     : take ? 'Son atılan kağıdı alabilirsin: dokun ya da eline sürükle'
     : `Son atan: ${last.by === S.mySeat ? 'sen' : nameOf(last.by)}`;
 }
@@ -1163,7 +1291,7 @@ function renderNotebook() {
   const felt = $('felt');
   const fw = felt.clientWidth;
   const fh = felt.clientHeight;
-  const small = Math.min(1, (fw * 0.3) / W, (fh * 0.96) / H);
+  const small = Math.min(0.85, (fw * (fw < 500 ? 0.3 : 0.22)) / W, (fh * (fw < 500 ? 0.96 : 0.62)) / H);
   const big = Math.min(1.25, (fw * 0.9) / W, (fh * 0.92) / H);
   nb.style.setProperty('--nbs', Math.max(0.2, small).toFixed(3));
   nb.style.setProperty('--nbo', Math.max(small, big).toFixed(3));
@@ -1181,9 +1309,8 @@ function renderGame() {
   renderOpps();
   layoutTable();
 
-  // Ortaya atılanlar
+  // Ortaya atılanlar (deste + gösterge çizildikten sonra: yükseklik onlara göre değişir)
   $('discard').classList.toggle('drop', myTurn() && g.phase === 'discard');
-  renderSpread();
 
   // Deste + gösterge
   const deck = $('deck');
@@ -1197,14 +1324,15 @@ function renderGame() {
   const ind = $('indicator');
   ind.innerHTML = '<div class="slotc"></div>';
   ind.firstChild.appendChild(cardEl(g.indicator));
-  ind.insertAdjacentHTML('beforeend', `<span>Gösterge</span><span class="okey-lbl">Okey: ${SYM[g.okey.s]}${rl(g.okey.r)} · ×${SUIT_MULT[g.okey.s]}</span>`);
+  ind.insertAdjacentHTML('beforeend', `<span class="ind-lbl">Gösterge</span><span class="okey-lbl">Okey: ${SYM[g.okey.s]}${rl(g.okey.r)} · ×${SUIT_MULT[g.okey.s]}</span>`);
+  renderNotebook();
+  renderSpread();
 
   $('log').innerHTML = g.log.slice(-3).map((l) => `<div>${esc(l)}</div>`).join('');
 
   syncHand();
   renderHand();
   renderBar();
-  renderNotebook();
   // gösterdiğim gösterge kağıdı elimde işaretli dursun
   const sid = myShownId();
   handEls.forEach((el, id) => el.classList.toggle('shown-card', id === sid));
@@ -1519,7 +1647,7 @@ function snapRects() {
   const dk = $('deck').querySelector('.card:last-child');
   r.deck = dk && dk.getBoundingClientRect();
   const last = $('spread').querySelector('.card.last');
-  r.spreadLast = last && last.getBoundingClientRect();
+  r.spreadLast = upright(last);
   r.fans = {};
   document.querySelectorAll('.ofan').forEach((f) => { r.fans[+f.dataset.seat] = [...f.children].map((c) => c.getBoundingClientRect()); });
   return r;
@@ -1567,7 +1695,7 @@ function animateDiff(prev, cur, rects) {
     const src = delta.findIndex((d) => d < 0);
     const seat = src >= 0 ? src : top.by;
     const dest = $('spread').querySelector('.card.last');
-    const to = dest && dest.getBoundingClientRect();
+    const to = upright(dest);
     let from;
     let startFace = 'front';
     if (seat === S.mySeat) {
@@ -1583,7 +1711,7 @@ function animateDiff(prev, cur, rects) {
     if (dest) dest.style.visibility = 'hidden';
     FX.fly({
       from, to, front: cardEl(top), back: backEl(top.b), startFace, endFace: 'front',
-      duration: 560, arc: 80, endRotate: 0, sound: 'slide',
+      duration: 560, arc: 80, endRotate: dest ? Number(dest.dataset.rot) || 0 : 0, sound: 'slide',
       onLand: () => { if (dest) dest.style.visibility = ''; FX.play('place'); },
     });
     lastDrop = null;

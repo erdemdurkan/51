@@ -439,10 +439,23 @@ io.on('connection', (socket) => {
 
   handle('leave', () => {
     const { room, seat } = ctx();
-    if (room.game) throw new Error('Oyun sürerken çıkılamaz.');
+    if (room.game) {
+      // Oyun sürerken: koltuk korunur (linkle geri dönülebilir), bağlantı kopmuş sayılır
+      const p = room.seats[seat];
+      p.socketId = null;
+      socket.leave(room.code);
+      socket.data = { pid: socket.data.pid };
+      const anyoneLeft = room.seats.some((q) => q && !q.bot && q.socketId);
+      if (!anyoneLeft) {
+        clearTimeout(room.cleanup);
+        if (room.seats.every((q) => !q || q.bot || q === p)) rooms.delete(room.code); // bilgisayarlı oyun: oda silinir
+        else scheduleCleanup(room);
+      } else broadcast(room);
+      return;
+    }
     room.seats[seat] = null;
     socket.leave(room.code);
-    socket.data = {};
+    socket.data = { pid: socket.data.pid };
     ensureHost(room);
     if (!hasHumans(room)) rooms.delete(room.code);
     else broadcast(room);
