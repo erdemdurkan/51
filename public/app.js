@@ -372,7 +372,22 @@ function backGroups(arr = hand.back) {
 }
 // Arka katlar: 1 = ön sıranın hemen arkası, 2 = en arka (en fazla 3 kat)
 const rowArr = (r) => (r === 1 ? hand.back : hand.back2);
-const setRowArr = (r, a) => { if (r === 1) hand.back = cleanBack(a); else hand.back2 = cleanBack(a); };
+const setRowArr = (r, a) => { if (r === 1) hand.back = normBack(a); else hand.back2 = normBack(a); };
+// Üst sıradaki boşlukları kağıtlara göre yeniden kur: her per/çift kendi bloğunda,
+// yan yana gelen kağıtlar (6♦7♦ + 8♦) tek per olur; per/çift olmayanlar ayrı durur.
+function normBack(arr) {
+  if (!S || !S.game) return cleanBack(arr);
+  const byId = Object.fromEntries(S.game.myHand.map((c) => [c.id, c]));
+  const ids = arr.filter((id) => id !== null && byId[id]);
+  const start = new Map(findGroups(ids, byId).map((g) => [g[0], g]));
+  const out = [];
+  for (let i = 0; i < ids.length;) {
+    const g = start.get(ids[i]);
+    if (g) { out.push(null, ...g, null); i += g.length; }
+    else { out.push(ids[i]); i++; }
+  }
+  return cleanBack(out);
+}
 const backIds = () => [...hand.back, ...hand.back2].filter((id) => id !== null);
 function sortHand(kind) {
   const g = S.game;
@@ -408,7 +423,7 @@ function syncHand() {
   if (hand.back2.length) { hand.back = [...hand.back, null, ...hand.back2]; hand.back2 = []; }
   const ids = new Set(g.myHand.map((c) => c.id));
   hand.order = hand.order.filter((id) => ids.has(id));
-  hand.back = cleanBack(hand.back.filter((id) => id === null || ids.has(id)));
+  hand.back = normBack(hand.back.filter((id) => id === null || ids.has(id)));
   hand.back2 = cleanBack(hand.back2.filter((id) => id === null || ids.has(id)));
   const placed = new Set([...hand.order, ...backIds()]);
   for (const c of g.myHand) if (!placed.has(c.id)) hand.order.push(c.id);
@@ -705,12 +720,14 @@ function layoutHand(dragId = null, gap = null) {
   for (const r of [1, 2]) {
     const top = r === 1 ? T.r1 : T.r2;
     if (top == null) continue;
-    backGroups(rowArr(r)).forEach((g) => {
+    // üst sırada da gruplar kağıtlara bakılarak bulunur (aradaki boşluğa göre değil)
+    findGroups(rowArr(r).filter((id) => id !== null && byId[id]), byId).forEach((g) => {
       const last = g[g.length - 1];
+      if (pos[r][last] == null) return;
       const x = pos[r][last] + Math.min(spOf[r], hw) - 2;
       const y = Math.max(0, top - 18);
       tag(g);
-      mk(g.length >= 3 ? 'Per' : 'Çift', g.length >= 3 ? 'per' : 'pair', x - 40, y, g, 'Basılı tutup sürükle: sağa, sola ya da alt sıraya');
+      mk(g.kind === 'per' ? 'Per' : 'Çift', g.kind === 'per' ? 'per' : 'pair', x - 40, y, g, 'Basılı tutup sürükle: sağa, sola ya da alt sıraya');
     });
   }
 }
