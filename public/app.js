@@ -419,10 +419,12 @@ function syncHand() {
     else { hand = { key, order: [], back: [], back2: [] }; sortHand('series'); }
   }
   if (!hand.back2) hand.back2 = [];
+  if (!hand.bond) hand.bond = {};
   // en fazla 2 kat (ön sıra + 1 arka kat): eski 3. kattakiler arka kata katılır
   if (hand.back2.length) { hand.back = [...hand.back, null, ...hand.back2]; hand.back2 = []; }
   const ids = new Set(g.myHand.map((c) => c.id));
   hand.order = hand.order.filter((id) => ids.has(id));
+  for (const k of Object.keys(hand.bond)) if (!ids.has(k)) delete hand.bond[k];
   hand.back = normBack(hand.back.filter((id) => id === null || ids.has(id)));
   hand.back2 = cleanBack(hand.back2.filter((id) => id === null || ids.has(id)));
   const placed = new Set([...hand.order, ...backIds()]);
@@ -445,8 +447,12 @@ function removeEverywhere(ids) {
   hand.back = cleanBack(hand.back.filter((x) => !set.has(x)));
   hand.back2 = cleanBack(hand.back2.filter((x) => !set.has(x)));
 }
-function moveTo(id, gap) {
+// dir: bırakırken farenin son yönü ('L' sola, 'R' sağa) — kağıt o yandaki komşusuyla gruplanır
+function moveTo(id, gap, dir = null) {
   removeEverywhere([id]);
+  if (!hand.bond) hand.bond = {};
+  delete hand.bond[id];
+  if (dir) hand.bond[id] = dir;
   if (gap.row === 1 || gap.row === 2) {
     const arr = rowArr(gap.row).slice();
     arr.splice(backPos(arr, gap.idx), 0, id);
@@ -532,13 +538,21 @@ function findGroups(ids, byId) {
     }
     return -1;
   };
+  const bond = hand.bond;
   const best = new Array(n + 1).fill(0);
   const pick = new Array(n + 1).fill(-1);
   for (let i = n - 1; i >= 0; i--) {
     best[i] = best[i + 1];
     pick[i] = -1;
     for (let j = i + 1; j < Math.min(n, i + 13); j++) {
-      const s = score(ids.slice(i, j + 1).map((id) => byId[id]));
+      let s = score(ids.slice(i, j + 1).map((id) => byId[id]));
+      // sürüklerken son hareket yönü: kağıt o yöndeki komşusuyla aynı grupta olmayı tercih eder
+      if (s > 0 && bond) {
+        for (let k = i; k <= j; k++) {
+          const b = bond[ids[k]];
+          if ((b === 'L' && k > i) || (b === 'R' && k < j)) s += 30;
+        }
+      }
       if (s > 0 && s + best[j + 1] > best[i]) { best[i] = s + best[j + 1]; pick[i] = j; }
     }
   }
@@ -949,6 +963,10 @@ document.addEventListener('pointermove', (e) => {
     if (drag.kind === 'card') drag.el.classList.add('dragging');
     }
   }
+  // son ~150 ms'deki yatay hareket: bırakınca hangi yöne gidildiği
+  const now = performance.now();
+  (drag.hist = drag.hist || []).push({ x: e.clientX, t: now });
+  while (drag.hist.length > 2 && now - drag.hist[0].t > 150) drag.hist.shift();
   drag.ghost.style.left = e.clientX - drag.dx + 'px';
   drag.ghost.style.top = e.clientY - drag.dy + 'px';
   const inHand = overHand(e.clientX, e.clientY);
@@ -982,7 +1000,11 @@ function endDrag(e, cancel) {
   if (!d.moved) return onTap(d);
   const t = document.elementFromPoint(e.clientX, e.clientY);
   if (d.kind === 'card') {
-    if (d.gap != null) return moveTo(d.id, d.gap);
+    if (d.gap != null) {
+      const h = d.hist || [];
+      const dx = h.length > 1 ? h[h.length - 1].x - h[0].x : 0;
+      return moveTo(d.id, d.gap, dx <= -3 ? 'L' : dx >= 3 ? 'R' : null);
+    }
     layoutHand();
     if (overFelt(t)) { lastDrop = { id: d.id, rect: dropRect, t: Date.now() }; discardCard(d.id, false); }
   } else {
