@@ -1225,7 +1225,7 @@ function layoutTable() {
   if (W <= 0 || H <= 0) return;
   const narrow = window.innerWidth < 600;
   const gap = narrow ? 6 : 14;
-  const av = Math.round(Math.max(44, Math.min(84, H * 0.12)));
+  const av = Math.round(Math.max(40, Math.min(66, H * 0.095)));
   box.style.setProperty('--av', av + 'px');
   const hosts = { top: $('pl-top'), left: $('pl-left'), right: $('pl-right'), me: $('pl-me') };
   const put = (el, x, y) => { el.style.left = Math.round(x) + 'px'; el.style.top = Math.round(y) + 'px'; };
@@ -1251,7 +1251,7 @@ function layoutTable() {
   top.style.height = AH + 'px';
   top.style.setProperty('--S', AH + 'px');
   top.style.setProperty('--rim', '0px');
-  pw = Math.round(Math.max(30, Math.min(hw * 0.8, (AH - 70) / 2.5, AW * 0.16)));
+  pw = Math.round(Math.max(30, Math.min(hw * 0.8, (AH - 40) / 2.4, AW * 0.16)));
   document.documentElement.style.setProperty('--pw', pw + 'px');
 
   // oyuncu kartları

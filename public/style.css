@@ -1569,3 +1569,9 @@ body.flat .pav-edit { right: 2%; bottom: 30%; }
 /* figür daha büyük, plaka yalnızca alt kısmına biner */
 body.flat .pav, body.flat .pl.turn .pav, body.flat .pl.me#pl-me .pav { width: calc(var(--av, 72px) * 1.75); height: calc(var(--av, 72px) * 1.75); margin-bottom: calc(var(--av, 72px) * -0.42); }
 body.flat #discardHint { left: 50%; transform: none; margin-left: calc(var(--pw) * .3); max-width: 48%; white-space: normal; text-align: left; }
+/* plaka kısa: isim üstte; altın · puan · kağıt tek satırda */
+body.flat .pinf { display: grid; grid-template-columns: repeat(3, auto); column-gap: 8px; row-gap: 1px; justify-content: center; padding: 5px 12px 6px; font-size: 12px; line-height: 1.2; }
+body.flat .pinf .pn { grid-column: 1 / -1; font-size: 14px; }
+body.flat .pinf .pc { font-size: 12px; }
+body.flat .pl.me#pl-me .pinf { font-size: 12px; }
+body.flat .pl.me#pl-me .pinf .pn { font-size: 14px; }
