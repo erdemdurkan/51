@@ -428,7 +428,12 @@ function syncHand() {
   hand.back = normBack(hand.back.filter((id) => id === null || ids.has(id)));
   hand.back2 = cleanBack(hand.back2.filter((id) => id === null || ids.has(id)));
   const placed = new Set([...hand.order, ...backIds()]);
-  for (const c of g.myHand) if (!placed.has(c.id)) hand.order.push(c.id);
+  for (const c of g.myHand) {
+    if (placed.has(c.id)) continue;
+    // yerden/desteden sürükleyip elime bıraktığım kağıt: doğrudan bıraktığım yere girer
+    if (pendingTake && !pendingTake.used && Date.now() - pendingTake.t < 4000) { pendingTake.used = c.id; insertAt(c.id, pendingTake.gap); }
+    else hand.order.push(c.id);
+  }
   saveHand();
 }
 // arka sırada "idx. kağıdın önüne" karşılık gelen dizi konumu
@@ -448,11 +453,9 @@ function removeEverywhere(ids) {
   hand.back2 = cleanBack(hand.back2.filter((x) => !set.has(x)));
 }
 // dir: bırakırken farenin son yönü ('L' sola, 'R' sağa) — kağıt o yandaki komşusuyla gruplanır
-function moveTo(id, gap, dir = null) {
-  removeEverywhere([id]);
-  if (!hand.bond) hand.bond = {};
-  delete hand.bond[id];
-  if (dir) hand.bond[id] = dir;
+// Sürükleyip ele bıraktığım (yerden/desteden) kağıt: nereye bırakıldı, ekranda nerede duruyordu
+let pendingTake = null;
+function insertAt(id, gap) {
   if (gap.row === 1 || gap.row === 2) {
     const arr = rowArr(gap.row).slice();
     arr.splice(backPos(arr, gap.idx), 0, id);
@@ -460,6 +463,13 @@ function moveTo(id, gap, dir = null) {
   } else {
     hand.order.splice(Math.max(0, Math.min(gap.idx, hand.order.length)), 0, id);
   }
+}
+function moveTo(id, gap, dir = null) {
+  removeEverywhere([id]);
+  if (!hand.bond) hand.bond = {};
+  delete hand.bond[id];
+  if (dir) hand.bond[id] = dir;
+  insertAt(id, gap);
   saveHand();
   layoutHand();
 }
@@ -775,7 +785,7 @@ function renderHand() {
   for (const id of [...hand.order, ...backIds()]) {
     if (handEls.has(id)) continue;
     const el = cardEl(byId[id]);
-    if (fresh) { // yeni çekilen kağıt yukarıdan gelsin
+    if (fresh && !(pendingTake && pendingTake.used === id)) { // yeni çekilen kağıt yukarıdan gelsin (sürükleyip bıraktığım hariç)
       el.style.left = box.clientWidth / 2 - hw / 2 + 'px';
       el.style.top = rowTops().front + 'px';
       el.style.transform = `translateY(${-hw * 1.6}px) rotate(-10deg)`;
@@ -792,7 +802,7 @@ const myTurn = () => S.game && S.game.status === 'playing' && S.game.turn === S.
 function doDraw(src, idx) {
   if (!myTurn() || S.game.phase !== 'draw') return toast(myTurn() ? 'Önce kağıt at' : 'Sıra sende değil');
   emit('draw', { src }, (res) => {
-    if (idx != null && res.card) moveTo(res.card.id, idx);
+    if (idx != null && res.card && !(pendingTake && pendingTake.used === res.card.id)) moveTo(res.card.id, idx);
   });
 }
 // ---------- Oyun içi onay penceresi (tarayıcı kutusu yerine, animasyonlu) ----------
@@ -1009,7 +1019,7 @@ function endDrag(e, cancel) {
     if (overFelt(t)) { lastDrop = { id: d.id, rect: dropRect, t: Date.now() }; discardCard(d.id, false); }
   } else {
     layoutHand();
-    if (d.gap != null) doDraw(d.kind, d.gap);
+    if (d.gap != null) { pendingTake = { gap: d.gap, rect: dropRect, t: Date.now(), used: null }; doDraw(d.kind, d.gap); }
   }
 }
 document.addEventListener('pointerup', (e) => endDrag(e, false));
@@ -1884,11 +1894,22 @@ function flyToSeat(seat, fromRect, card, startFace, backColor) {
   if (seat < 0 || !fromRect) return;
   if (seat === S.mySeat && card) {
     const el = handEls.get(card.id);
-    const to = el && el.getBoundingClientRect();
+    // hedef: kağıdın eldeki son yeri (geçiş animasyonunun ortası değil)
+    let to = null;
+    if (el) {
+      const tr = el.style.transition;
+      el.style.transition = 'none';
+      to = el.getBoundingClientRect();
+      el.offsetWidth;
+      el.style.transition = tr;
+    }
     if (el) el.style.visibility = 'hidden';
+    const dropped = pendingTake && pendingTake.used === card.id && pendingTake.rect;
+    if (dropped) { fromRect = pendingTake.rect; startFace = 'front'; }
+    pendingTake = null;
     FX.fly({
       from: fromRect, to, front: cardEl(card), back: backEl(card.b), startFace, endFace: 'front',
-      duration: 600, arc: 110, sound: 'slide',
+      duration: dropped ? 240 : 600, arc: dropped ? 0 : 110, sound: dropped ? null : 'slide',
       onLand: () => { if (el) el.style.visibility = ''; FX.play(startFace === 'back' ? 'flip' : 'place'); },
     });
   } else {
