@@ -2285,18 +2285,21 @@ function openShop(seat) {
   const mine = seat === S.mySeat;
   const p = S.seats[seat];
   const cur = (S.acc && S.acc[seat]) || {};
+  const until = (S.accUntil && S.accUntil[seat]) || {};
+  const free = !!p.bot; // bilgisayar oyuncusuna hediye ücretsiz
+  const left = (t) => { const m = Math.max(0, Math.round((t - Date.now()) / 60000)); return m >= 60 ? `${Math.floor(m / 60)} sa ${m % 60} dk` : `${m} dk`; };
   const tiles = Acc.ITEMS.map((it) => {
     const on = cur[it.slot] === it.id;
-    const poor = (myGold || 0) < it.price;
+    const poor = !free && (myGold || 0) < it.price;
     // her kutucukta figür o aksesuarla birlikte görünür
     return `<button class="shi${on ? ' on' : ''}${poor && !on ? ' poor' : ''}" data-id="${it.id}"${on ? ' disabled' : ''}>
       <span class="shf">${figureSvg(seat, 'sh' + seat + it.id, { [it.slot]: it.id })}</span>
       <span class="shn">${it.icon} ${it.name}</span>
-      <span class="shp">${on ? (mine ? 'Takılı' : 'Onda var') : '🪙 ' + fmt(it.price)}</span></button>`;
+      <span class="shp">${on ? `${mine ? 'Takılı' : 'Onda var'} · ${left(until[it.slot])} kaldı` : free ? 'Ücretsiz' : '🪙 ' + fmt(it.price)}</span></button>`;
   }).join('');
   modalKind = 'shop';
   $('modalBody').innerHTML = `<div class="shop"><h2>${mine ? 'Kendine aksesuar al' : `${esc(p.name)} için hediye seç`}</h2>
-    <p class="muted">Altının: <b>🪙 ${fmt(myGold || 0)}</b> · Aksesuarlar bu oyun boyunca takılı kalır.${mine ? '' : ' Hediyeyi masadaki herkes görür.'}</p>
+    <p class="muted">Altının: <b>🪙 ${fmt(myGold || 0)}</b> · Aksesuarlar alındığı andan 24 saat takılı kalır.${free ? ' Bilgisayar oyuncusuna hediye ücretsiz.' : mine ? '' : ' Hediyeyi masadaki herkes görür.'}</p>
     <div class="shgrid">${tiles}</div>
     <div class="mbtns">${mine ? '<button id="shAv">🖼 Profil resmini değiştir</button>' : ''}<button id="shClose">Kapat</button></div></div>`;
   $('modal').classList.remove('hidden');
@@ -2305,7 +2308,7 @@ function openShop(seat) {
   $('modalBody').querySelectorAll('.shi:not(.on)').forEach((b) => {
     b.onclick = () => {
       const it = Acc.byId[b.dataset.id];
-      if ((myGold || 0) < it.price) { toast(`Yeterli altının yok (${it.price} altın gerekli)`); FX.play('error'); return; }
+      if (!free && (myGold || 0) < it.price) { toast(`Yeterli altının yok (${it.price} altın gerekli)`); FX.play('error'); return; }
       emit('gift', { toSeat: seat, item: it.id }, (res) => { setGold(res.gold); closeModal(); });
     };
   });

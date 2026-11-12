@@ -93,7 +93,26 @@ const ACC = {
   kolye: { slot: 'neck', price: 250, name: 'altın kolye' },
   sapka: { slot: 'head', price: 250, name: 'fötr şapka' }, tac: { slot: 'head', price: 300, name: 'taç' },
 };
-const accOf = (room) => (room.acc = room.acc || [{}, {}, {}, {}]);
+// Aksesuar alındığı andan 24 saat sonra düşer (14:21'de alınan, ertesi gün 14:21'de).
+// Gerçek oyuncuda profilinde durur (her masada görünür); bilgisayar oyuncusunda o koltukta.
+const ACC_MS = 24 * 60 * 60 * 1000;
+function accStore(seat) {
+  if (!seat) return null;
+  if (seat.pid && players[seat.pid]) return (players[seat.pid].acc = players[seat.pid].acc || {});
+  return (seat.acc = seat.acc || {});
+}
+// { slot: { id, until } } -> süresi geçenler silinir
+function liveAcc(seat) {
+  const st = accStore(seat);
+  if (!st) return {};
+  const now = Date.now();
+  let dirty = false;
+  for (const k of Object.keys(st)) if (!st[k] || !(st[k].until > now) || !ACC[st[k].id]) { delete st[k]; dirty = true; }
+  if (dirty && seat.pid) savePlayers();
+  return st;
+}
+const accOf = (room) => room.seats.map((p) => Object.fromEntries(Object.entries(liveAcc(p)).map(([k, v]) => [k, v.id])));
+const accUntilOf = (room) => room.seats.map((p) => Object.fromEntries(Object.entries(liveAcc(p)).map(([k, v]) => [k, v.until])));
 
 // Oyun bitince yerdeki parayı dağıt (sadece 4 gerçek oyunculu online masa)
 //  1.: yarısı (2 x ücret) · 2.: ücreti geri · finali kazanan: ücreti geri · finali kaybeden: 0
@@ -173,6 +192,7 @@ function broadcast(room) {
       seats: room.seats.map((s) => s && { name: s.name, bot: !!s.bot, connected: !!(s.socketId || s.bot), host: s.token === room.hostToken, gold: s.pid ? goldOf(s.pid) : null, avatar: s.pid ? avatarOf(s.pid) : null, device: s.bot || !s.socketId ? null : ((io.sockets.sockets.get(s.socketId) || {}).data || {}).device || null }),
       myGold: p.pid ? goldOf(p.pid) : null,
       acc: accOf(room),
+      accUntil: accUntilOf(room),
       money: room.money ? { fee: room.money.fee, pot: room.money.pot, payouts: room.money.payouts || null } : null,
       game: room.game ? room.game.view(seat) : null,
       next: room.game && room.game.status === 'handOver' && room.next
@@ -402,7 +422,6 @@ io.on('connection', (socket) => {
       room.money = { fee, pot: fee * 4, settled: false };
     }
     room.game = newGame(room);
-    room.acc = [{}, {}, {}, {}]; // yeni oyun: aksesuarlar sıfırlanır
     broadcast(room);
   });
 
@@ -415,14 +434,17 @@ io.on('connection', (socket) => {
     const to = Number(toSeat);
     if (!it) throw new Error('Böyle bir aksesuar yok.');
     if (!Number.isInteger(to) || to < 0 || to > 3 || !room.seats[to]) throw new Error('Oyuncu bulunamadı.');
-    const acc = accOf(room);
-    if (acc[to][it.slot] === item) throw new Error(to === seat ? 'Bu zaten sende takılı.' : 'Bu zaten onda takılı.');
-    if (goldOf(pid) < it.price) throw new Error(`Yeterli altının yok (${it.price} altın gerekli).`);
-    players[pid].gold -= it.price;
+    const target = room.seats[to];
+    const cur = liveAcc(target)[it.slot];
+    if (cur && cur.id === item) throw new Error(to === seat ? 'Bu zaten sende takılı.' : 'Bu zaten onda takılı.');
+    const price = target.bot ? 0 : it.price; // bilgisayar oyuncusuna hediye ücretsiz
+    if (goldOf(pid) < price) throw new Error(`Yeterli altının yok (${price} altın gerekli).`);
+    players[pid].gold -= price;
+    accStore(target)[it.slot] = { id: item, until: Date.now() + ACC_MS };
     savePlayers();
-    acc[to][it.slot] = item;
     room.seats.forEach((p) => { if (p && p.socketId) io.to(p.socketId).emit('giftFx', { from: seat, to, item }); });
-    broadcast(room);
+    // aksesuar gerçek oyuncunun profilinde: oturduğu bütün masalarda görünsün
+    for (const r of rooms.values()) if (r === room || (target.pid && r.seats.some((x) => x && x.pid === target.pid))) broadcast(r);
     return { gold: goldOf(pid) };
   });
 
@@ -531,4 +553,13 @@ io.on('connection', (socket) => {
 });
 
 const PORT = process.env.PORT || 3000;
+// Süresi dolan aksesuar oturulan masada da kalksın: dakikada bir bak
+setInterval(() => {
+  const now = Date.now();
+  for (const room of rooms.values()) {
+    const expired = room.seats.some((p) => { const st = p && accStore(p); return st && Object.values(st).some((v) => v && !(v.until > now)); });
+    if (expired) broadcast(room);
+  }
+}, 60 * 1000);
+
 server.listen(PORT, () => console.log(`İskambil 51 çalışıyor: http://localhost:${PORT}`));

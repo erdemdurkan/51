@@ -25,7 +25,8 @@
   "created": 1794090016846,
   "lastDaily": "2026-11-12",
   "streak": 2,
-  "avatar": 101
+  "avatar": 101,
+  "acc": {}
  },
  "7293b8afd4a72470ea80a0bb4f32f988": {
   "name": "Oyuncu",
@@ -721,5 +722,18 @@
   "created": 1794508606959,
   "streak": 0,
   "lastDaily": null
+ },
+ "c1d463a4fbb49b30216f7ec1fbab83a2": {
+  "name": "Erdem",
+  "gold": 950,
+  "created": 1794508683979,
+  "streak": 1,
+  "lastDaily": "2026-11-12",
+  "acc": {
+   "mouth": {
+    "id": "sigara",
+    "until": 1794595092772
+   }
+  }
  }
 }
