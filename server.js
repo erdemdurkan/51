@@ -193,6 +193,7 @@ function broadcast(room) {
       myGold: p.pid ? goldOf(p.pid) : null,
       acc: accOf(room),
       accUntil: accUntilOf(room),
+      chat: room.chat || [],
       money: room.money ? { fee: room.money.fee, pot: room.money.pot, payouts: room.money.payouts || null } : null,
       game: room.game ? room.game.view(seat) : null,
       next: room.game && room.game.status === 'handOver' && room.next
@@ -422,6 +423,19 @@ io.on('connection', (socket) => {
       room.money = { fee, pot: fee * 4, settled: false };
     }
     room.game = newGame(room);
+    broadcast(room);
+  });
+
+  // Masada sohbet: mesaj ya da emoji (o masadaki son 50 mesaj saklanır)
+  handle('chat', ({ text }) => {
+    const { room, seat } = ctx();
+    const msg = String(text || '').replace(/\s+/g, ' ').trim().slice(0, 120);
+    if (!msg) throw new Error('Boş mesaj gönderilemez.');
+    const now = Date.now();
+    if (now - (socket.data.lastChat || 0) < 700) throw new Error('Biraz yavaş yaz 🙂');
+    socket.data.lastChat = now;
+    room.chat = [...(room.chat || []), { seat, name: room.seats[seat].name, text: msg, t: now }].slice(-50);
+    room.seats.forEach((p) => { if (p && p.socketId) io.to(p.socketId).emit('chat', { seat, text: msg }); });
     broadcast(room);
   });
 

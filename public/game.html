@@ -108,7 +108,11 @@ else {
     <div id="logBar" title="Masada olanlar">
       <span class="hb-ic">💬</span><span id="logLast">Masada olanlar</span><button id="logToggle" aria-label="Masada olanları aç">▾</button>
     </div>
-    <div id="logDrop" class="hidden"><div class="ld-title">Masada olanlar</div><div id="logList"></div></div>
+    <div id="logDrop" class="hidden"><div class="ld-title">Masada olanlar</div><div id="logList"></div>
+      <div class="ld-title chat-t">💬 Sohbet</div><div id="chatList"></div>
+      <div id="chatEmo"><button type="button" data-e="😀">😀</button><button type="button" data-e="😂">😂</button><button type="button" data-e="😍">😍</button><button type="button" data-e="😎">😎</button><button type="button" data-e="🤔">🤔</button><button type="button" data-e="😢">😢</button><button type="button" data-e="😡">😡</button><button type="button" data-e="😴">😴</button><button type="button" data-e="👍">👍</button><button type="button" data-e="👏">👏</button><button type="button" data-e="🙏">🙏</button><button type="button" data-e="🔥">🔥</button><button type="button" data-e="🎉">🎉</button><button type="button" data-e="❤️">❤️</button><button type="button" data-e="🍀">🍀</button><button type="button" data-e="🤞">🤞</button></div>
+      <form id="chatForm" autocomplete="off"><input id="chatIn" maxlength="120" placeholder="Mesaj yaz…"><button type="submit" id="chatSend">Gönder</button></form>
+    </div>
     <div id="scoreBar" title="Güncel puan tablosunu aç">
       <span class="hb-ic">📋</span><b>Puan tablosu</b><span id="scoreTotals"></span>
     </div>

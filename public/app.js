@@ -1221,10 +1221,19 @@ function playerCard(slot, seat, name, turn, nCards) {
   const pg = host.querySelector('.pg');
   pg.innerHTML = p && p.bot ? '' : gold == null ? '🪙 —' : `🪙 ${fmt(gold)}`;
   pg.style.display = p && p.bot ? 'none' : '';
-  host.querySelector('.ps').innerHTML = `Puan <b>${tot}</b>`;
+  // sıralama: en düşük ceza puanı 1. (eşit puanlılar aynı sırada); ilk el yazılınca görünür
+  const all = totalsOf();
+  const rank = 1 + all.filter((v) => v < tot).length;
+  const medal = ['🥇', '🥈', '🥉'][rank - 1] || '';
+  const rk = g.scores.length ? `<span class="prk r${rank}">${medal}${rank}.</span> ` : '';
+  host.querySelector('.ps').innerHTML = `${rk}Puan <b>${tot}</b>`;
   const out = g.final && g.active.length === 2 && !g.active.includes(seat);
   const shown = g.shown && g.shown.seat === seat ? ' · 🃏 gösterge' : '';
-  host.querySelector('.pc').textContent = (out ? `🏆 ${g.final.first === seat ? '1.' : '2.'} oldu` : `${nCards} kağıt`) + shown;
+  // kağıt sayısı yazılmaz; yalnızca finalde derece ve gösterge işareti
+  const pcText = (out ? `🏆 ${g.final.first === seat ? '1.' : '2.'} oldu` : '') + (out ? shown : shown.replace(/^ · /, ''));
+  const pc = host.querySelector('.pc');
+  pc.textContent = pcText;
+  pc.style.display = pcText ? '' : 'none';
   host.classList.toggle('turn', !!turn);
   host.classList.toggle('off', !!(p && !p.connected));
   host.classList.toggle('out', !!out);
@@ -1596,6 +1605,7 @@ function renderHud(g) {
     list.innerHTML = log.slice(-40).map((l) => `<div>${esc(l)}</div>`).join('');
     list.scrollTop = list.scrollHeight; // en yenisi altta görünsün
   }
+  renderChat();
   const tot = totalsOf();
   $('scoreTotals').innerHTML = [0, 1, 2, 3].map((i) =>
     `<span class="st${i === S.mySeat ? ' me' : ''}"><i>${esc(nameOf(i))}</i> <b>${tot[i]}</b></span>`).join('');
@@ -1608,6 +1618,44 @@ function toggleLogDrop(open) {
   if (on) { const l = $('logList'); l.scrollTop = l.scrollHeight; }
 }
 $('logBar').onclick = () => toggleLogDrop();
+
+// ---------- Sohbet: mesaj / emoji; yazan oyuncunun figürünün yanında 3 sn balon ----------
+let chatKey = '';
+function renderChat() {
+  const c = (S && S.chat) || [];
+  const key = c.length + '|' + (c.length ? c[c.length - 1].t : '');
+  if (key === chatKey) return;
+  chatKey = key;
+  const list = $('chatList');
+  list.innerHTML = c.length
+    ? c.map((m) => `<div class="${m.seat === S.mySeat ? 'me' : ''}"><b>${esc(m.seat === S.mySeat ? 'Sen' : m.name)}:</b> ${esc(m.text)}</div>`).join('')
+    : '<div class="empty">Henüz mesaj yok. Bir şey yaz ya da emoji gönder.</div>';
+  list.scrollTop = list.scrollHeight;
+}
+function sendChat(text) {
+  text = String(text || '').trim();
+  if (!text) return;
+  emit('chat', { text }, () => { $('chatIn').value = ''; });
+}
+$('chatForm').addEventListener('submit', (e) => { e.preventDefault(); sendChat($('chatIn').value); });
+$('chatEmo').addEventListener('click', (e) => { const b = e.target.closest('button[data-e]'); if (b) sendChat(b.dataset.e); });
+// yazarken oyunun kısayolları tetiklenmesin
+$('chatIn').addEventListener('keydown', (e) => e.stopPropagation());
+socket.on('chat', ({ seat, text }) => {
+  if (!S || !S.seats) return;
+  const slot = seat === S.mySeat ? 'me' : PL[(seat - S.mySeat + 4) % 4];
+  const host = $('pl-' + slot);
+  if (!host) return;
+  host.querySelectorAll('.chat-bubble').forEach((b) => b.remove());
+  const b = document.createElement('div');
+  // yalnızca emoji gönderildiyse balonda büyük görünür
+  b.className = 'chat-bubble' + (/^\p{Extended_Pictographic}+$/u.test(text.replace(/️/g, '')) ? ' emo' : '');
+  b.textContent = text;
+  host.appendChild(b);
+  if (seat !== S.mySeat) FX.play('pick');
+  clearTimeout(host._chatT);
+  host._chatT = setTimeout(() => { b.classList.add('out'); setTimeout(() => b.remove(), 300); }, 3000);
+});
 $('scoreBar').onclick = () => openModal('score');
 document.addEventListener('pointerdown', (e) => { if (!e.target.closest('#hud')) toggleLogDrop(false); });
 
