@@ -20,7 +20,7 @@ else {
 <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="flat">
 <!-- Okey kağıdı için ayna/kristal altın dolgusu (üzerinden parlama geçer) -->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
@@ -119,6 +119,7 @@ else {
     <span class="grow"></span>
 
     <button id="btnResult" class="small hidden">Sonuç</button>
+    <button id="btnWall" class="small" title="Duvar kağıdını değiştir">🎨<span class="rl-t"> Tema</span></button>
     <button class="small rules-btn" title="Oyun kuralları">📜<span class="rl-t"> Kurallar</span></button>
     <button id="btnScore" class="small">Puanlar</button>
   </header>
@@ -144,25 +145,25 @@ else {
             <div id="indicator"></div>
           </div>
         </div>
-        <div id="tableUI">
-        <div id="status"></div>
-        <div id="actions">
-          <button id="btnShow" class="small show-btn hidden">🃏 Gösterge göster</button>
-          <button id="btnUndo" class="small hidden">↩ Geri bırak</button>
-          <button id="btnDiscard" class="small">At</button>
-          <button id="btnFinish" class="small finish">Bitir</button>
-        </div>
-        </div>
       </div>
       <div class="opp" id="opp-top"></div>
       <div class="opp side" id="opp-left"></div>
       <div class="opp side" id="opp-right"></div>
+      <div class="pl me" id="pl-me"></div>
+      <div id="tableUI">
+      <div id="status"></div>
+      <div id="actions">
+        <button id="btnShow" class="small show-btn hidden">🃏 Gösterge göster</button>
+        <button id="btnUndo" class="small hidden">↩ Geri bırak</button>
+        <button id="btnDiscard" class="small">At</button>
+        <button id="btnFinish" class="small finish">Bitir</button>
+      </div>
+      </div>
     </div>
   </div>
   <div id="bar"></div>
   <div id="hand"></div>
-  <div class="pl me" id="pl-me"></div>
-  <div id="notebook" title="Puan defteri">
+    <div id="notebook" title="Puan defteri">
     <div class="nb-paper"><svg class="nb-lines"></svg><div class="nb-text"></div></div>
     <svg class="pen" viewBox="0 0 220 30" aria-hidden="true">
       <defs>
@@ -188,11 +189,9 @@ else {
 <button id="btnMute" class="mute-fab" aria-label="Ses">🔊</button>
 
 <script src="/socket.io/socket.io.js"></script>
-<script src="vendor/three.min.js"></script>
 <script src="fx.js"></script>
 <script src="portrait.js"></script>
 <script src="avatar.js"></script>
-<script src="stage3d.js"></script>
 <script src="rules.js"></script>
 <script src="app.js"></script>
 </body>

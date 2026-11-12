@@ -1369,24 +1369,6 @@ body.tilting, body.tilting * { cursor: ns-resize !important; }
 /* Okey: arkadaki neon kaldırıldı, yalnızca yüzdeki ayna parlaması kalır */
 .card.wild { animation: none; box-shadow: -1px 0 2px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.35); }
 #hand .card.wild.sel { box-shadow: 0 0 0 3px var(--gold), 0 8px 16px rgba(0,0,0,.5); }
-/* Benim kartım: ekranın sol alt köşesinde */
-.pl.me#pl-me { position: fixed !important; left: 14px !important; top: auto !important; bottom: 14px; z-index: 250; }
-@media (max-width: 599px) { .pl.me#pl-me { left: 6px !important; bottom: 6px; } }
-.pl.me#pl-me { --av: 60px; }
-.pl.me#pl-me .pcard { gap: 8px; padding: 5px 12px 5px 5px; }
-.pl.me#pl-me .pinf { font-size: 12px; }
-.pl.me#pl-me .pinf .pn { font-size: 14px; max-width: 120px; }
-/* el, sol alttaki oyuncu kartına binmesin: iki yanda eşit pay (el ortada kalır) */
-@media (min-width: 900px) { #hand { margin-left: 230px; margin-right: 230px; } }
-/* Benim avatarım 3 kat büyük (60 → 180px); bilgiler portrenin altında */
-.pl.me#pl-me { --av: 180px; }
-.pl.me#pl-me .pcard { flex-direction: column; gap: 8px; padding: 10px 10px 12px; border-radius: 22px; align-items: center; }
-.pl.me#pl-me .pav { box-shadow: 0 0 0 4px #d6a852, 0 0 0 7px #3a2508, 0 8px 20px rgba(0,0,0,.6); }
-.pl.me#pl-me.turn .pav { box-shadow: 0 0 0 4px #ffe08a, 0 0 0 7px #6a4510, 0 0 26px rgba(255,214,110,.95); }
-.pl.me#pl-me .pinf { align-items: center; text-align: center; font-size: 14px; }
-.pl.me#pl-me .pinf .pn { font-size: 17px; max-width: 180px; }
-@media (max-width: 599px) { .pl.me#pl-me { --av: 72px; } }
-@media (min-width: 900px) { #hand { margin-left: 250px; margin-right: 250px; } }
 
 /* Profil resmi: kendi kartıma tıklayınca seçim penceresi */
 .pl.me#pl-me { pointer-events: auto; }
@@ -1486,3 +1468,63 @@ body:has(#modal:not(.hidden)) #fxLayer, body:has(#modal:not(.hidden)) .carry-car
 @media (hover: none) { #hand > .mbtn { pointer-events: auto; } }
 /* taşı düğmesi türünü söyler: per altın, çift yeşil */
 .mbtn.pair { background: linear-gradient(#7fe0a0, #2f9e5b); color: #08240f; }
+
+/* =====================================================================
+   DÜZ ARAYÜZ — masa, sandalye, halı, parke yok. Tepeden 0° bakış.
+   Arka planda seçilen duvar kağıdı; kağıtlar ve oyuncular havada durur.
+   ===================================================================== */
+html { background: #0b1222; }
+body.flat { background: transparent; }
+body.flat #scene { display: none !important; }
+body.flat #topbar { background: none; text-shadow: none; }
+body.flat #gInfo { padding: 4px 12px; border-radius: 14px; background: rgba(10,10,16,.6); color: #eee; backdrop-filter: blur(4px); font-size: 13px; }
+body.flat #table { margin: 0 !important; padding: 0; perspective: none; }
+body.flat #tableBox { perspective: none; }
+body.flat #tableBox::before { display: none; }
+body.flat #tableTop, body.flat #tableTop.my-turn {
+  position: absolute; inset: auto; transform: none !important; transform-style: flat;
+  background: none !important; box-shadow: none !important; border-radius: 0 !important;
+}
+body.flat #tableTop::before, body.flat #tableTop::after,
+body.flat #felt::before, body.flat #felt::after { display: none !important; }
+body.flat .t-front, body.flat .t-leg, body.flat .led { display: none !important; }
+body.flat #felt { position: absolute; inset: 0; padding: 0; transform: none; background: none !important; box-shadow: none !important; }
+body.flat #tableUI { transform: translateX(-50%); bottom: 0; }
+
+/* havada duran kağıtlar: yumuşak, derin gölge */
+body.flat #spread .card { box-shadow: 0 10px 22px rgba(0,0,0,.35), 0 2px 5px rgba(0,0,0,.3); }
+body.flat #deck .slotc .card, body.flat #indicator .card { box-shadow: 0 12px 26px rgba(0,0,0,.38), 0 2px 5px rgba(0,0,0,.3); }
+body.flat #hand .card { box-shadow: 0 10px 24px rgba(0,0,0,.35), 0 2px 4px rgba(0,0,0,.3); }
+body.flat #discard.drop { border-color: rgba(255,255,255,.35); }
+body.flat #discard.hover { border-color: var(--gold); background: rgba(245,197,66,.12); }
+
+/* yazılar her duvar kağıdında okunsun: küçük koyu hap içinde */
+body.flat #deck > :not(.slotc), body.flat #indicator > :not(.slotc), body.flat #discardHint {
+  color: #f4ead6; text-shadow: none; background: rgba(10,10,16,.62); backdrop-filter: blur(4px);
+  padding: 2px 10px; border-radius: 10px;
+}
+body.flat #discardHint { width: max-content; max-width: 90%; }
+body.flat #tableUI #status { background: rgba(10,10,16,.7); box-shadow: 0 4px 14px rgba(0,0,0,.3); backdrop-filter: blur(4px); }
+body.flat #backZone { color: #f4ead6; }
+body.wp-light #backZone { color: #3a3226; }
+body.flat #hand { background: none; margin-top: 0; }
+body.flat #hand.hover { background: linear-gradient(to top, rgba(245,197,66,.18), transparent); }
+
+/* dört oyuncu kartı aynı boyda; benimki altta ortada */
+body.flat .pl.me#pl-me { position: absolute; z-index: 5; }
+body.flat .pcard { background: rgba(14,12,20,.78); border-color: rgba(255,255,255,.16); backdrop-filter: blur(6px); }
+body.flat .pav { box-shadow: 0 0 0 3px rgba(255,255,255,.85), 0 4px 10px rgba(0,0,0,.4); }
+
+/* duvar kağıdı seçici */
+.wppick h2 { margin: 0 0 6px; }
+.wppick h3 { margin: 12px 0 6px; font-size: 14px; color: var(--muted); font-weight: 600; }
+.wpgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; }
+.wpt { display: flex; flex-direction: column; gap: 6px; padding: 6px; border-radius: 12px; background: rgba(255,255,255,.05); border: 2px solid transparent; }
+.wpt.cur { border-color: var(--gold); }
+.wpt:hover { background: rgba(255,255,255,.1); }
+.wps { display: block; height: 64px; border-radius: 8px; background-size: auto; box-shadow: inset 0 0 0 1px rgba(255,255,255,.15); }
+.wpn { font-size: 13px; }
+body.flat #tableUI { position: absolute; transform: none; bottom: auto; z-index: 6; align-items: flex-start; max-width: none; }
+body.flat #discardHint { bottom: 0; }
+body.flat #discardHint { left: 50%; right: auto; transform: translateX(-50%); bottom: 0; }
+@media (max-width: 599px) { body.flat #tableUI { align-items: center; } body.flat #tableUI #status { font-size: 13px; white-space: normal; } }

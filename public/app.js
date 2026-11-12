@@ -26,6 +26,20 @@ const PIPS = (() => {
   };
 })();
 
+// 3B sahne kaldırıldı: düz arayüz. Eski çağrılar boşa düşsün diye küçük yer tutucu.
+const Stage3D = (() => {
+  const noop = () => {};
+  const FEMALE = new Set(['ayşe', 'ayse', 'fatma', 'zeynep', 'elif', 'emine', 'hatice', 'merve', 'esra', 'büşra', 'busra', 'özlem', 'ozlem', 'sevgi', 'seda', 'derya', 'gül', 'gul', 'gülsüm', 'selin', 'ebru', 'burcu', 'hülya', 'hulya', 'leyla', 'songül', 'songul', 'nur', 'sibel', 'nesrin', 'melek', 'havva', 'hacer', 'rabia', 'aylin', 'pınar', 'pinar', 'dilek', 'gizem', 'ceren', 'irem', 'sema', 'yasemin', 'meryem', 'sultan', 'ela', 'defne', 'ece', 'cansu', 'tuğba', 'tugba', 'nihal', 'neslihan', 'zehra', 'fadime', 'kübra', 'kubra', 'asli', 'aslı', 'sena', 'beyza', 'buse', 'nilay', 'nazlı', 'nazli', 'ayten', 'şule', 'sule', 'figen', 'gönül', 'gonul', 'bahar', 'deniz', 'sevil', 'sevda', 'canan', 'nermin', 'perihan', 'gamze', 'şeyma', 'seyma', 'hilal', 'rümeysa', 'rumeysa', 'betül', 'betul', 'özge', 'ozge', 'tülay', 'tulay', 'filiz', 'serap', 'mine', 'melis', 'naz', 'ilayda', 'ada', 'lale', 'ilknur', 'ayla', 'aysel', 'handan', 'neriman', 'saliha', 'sümeyye', 'sumeyye', 'emel', 'esma', 'ümmü', 'münevver']);
+  const MALE = new Set(['mehmet', 'ali', 'veli', 'can', 'umut', 'tarık', 'tarik', 'barış', 'baris', 'kaan', 'cenk', 'koray', 'ata', 'rıza', 'riza', 'musa', 'yusuf', 'kemal', 'murat', 'emre', 'burak', 'cem', 'ahmet', 'hasan', 'hüseyin', 'huseyin', 'mustafa', 'ömer', 'omer', 'osman', 'ismail', 'ibrahim', 'erdem', 'serkan', 'onur', 'volkan', 'okan', 'orhan']);
+  function isFemaleName(name) {
+    const n = String(name || '').trim().toLocaleLowerCase('tr').split(/s+/)[0].replace(/[^a-zçğıöşü]/g, '');
+    if (!n || MALE.has(n)) return false;
+    if (FEMALE.has(n)) return true;
+    return /(nur|gül|gul|sultan|hanım|hanim|su)$/.test(n) && n.length > 3;
+  }
+  return { available: false, metrics: null, layout: noop, idle: noop, setPlayer: noop, setTurn: noop, act: noop, anchor: () => null, isFemaleName, setLog: noop, setScores: noop };
+})();
+
 const store = {
   get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } },
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
@@ -1041,37 +1055,7 @@ function renderOpps() {
   });
 }
 
-// ---------- Kamera yakınlaştırma ----------
-// Yakınlaştırma sabit %125 (ayar kaldırıldı). Dar telefon ekranında yan oyuncular kesilmesin diye %100.
-let zoom = window.innerWidth < 600 ? 1 : 1.25;
-window.addEventListener('resize', () => { zoom = window.innerWidth < 600 ? 1 : 1.25; });
-
-// ---------- Kamera açısı: farenin orta tuşu basılıyken yukarı/aşağı sürükle ----------
-// tilt = masanın ekran düzleminden yatırılma açısı; büyüdükçe kamera alçalır, masaya karşıdan bakar
-const TILT_MIN = 8;
-const TILT_MAX = 66;
-// kuş bakışı: masa tepeden görünür (varsayılan 18°; orta tuşla sürükleyerek değişir)
-let camTilt = Math.min(TILT_MAX, Math.max(TILT_MIN, Number(store.get('i51-tilt2')) || 18));
-let tiltDrag = null;
-let tiltRaf = 0;
-function setTilt(t) {
-  camTilt = Math.min(TILT_MAX, Math.max(TILT_MIN, Math.round(t * 2) / 2));
-  store.set('i51-tilt2', camTilt);
-  if (tiltRaf) return;
-  tiltRaf = requestAnimationFrame(() => {
-    tiltRaf = 0;
-    if (S && S.game) { layoutTable(); renderNotebook(); renderSpread(); renderOpps(); layoutHand(); }
-  });
-}
-$('game').addEventListener('mousedown', (e) => {
-  if (e.button !== 1) return;
-  e.preventDefault(); // tarayıcının otomatik kaydırmasını engelle
-  tiltDrag = { y: e.clientY, t: camTilt };
-  document.body.classList.add('tilting');
-});
-window.addEventListener('mousemove', (e) => { if (tiltDrag) setTilt(tiltDrag.t + (e.clientY - tiltDrag.y) * 0.12); });
-window.addEventListener('mouseup', (e) => { if (e.button === 1 && tiltDrag) { tiltDrag = null; document.body.classList.remove('tilting'); } });
-$('game').addEventListener('auxclick', (e) => { if (e.button === 1) e.preventDefault(); });
+// Kamera yok: ekran düz arayüz, tepeden 0° bakış.
 
 // ---------- 3B masa: perspektifte yere oturan geniş masa, etrafında oturan oyuncular ----------
 const PL = [null, 'right', 'top', 'left'];
@@ -1114,6 +1098,8 @@ function playerCard(slot, seat, name, turn, nCards) {
   host.classList.toggle('out', !!out);
 }
 
+// Düz arayüz yerleşimi: duvar kağıdının üstünde havada duran kağıtlar.
+// Dört oyuncu kartı aynı boyda: üstte karşıdaki, yanlarda soldaki/sağdaki, altta ben (elimin üstünde).
 function layoutTable() {
   const box = $('tableBox');
   const top = $('tableTop');
@@ -1121,116 +1107,53 @@ function layoutTable() {
   const H = box.clientHeight;
   if (W <= 0 || H <= 0) return;
   const narrow = window.innerWidth < 600;
-  const short = window.innerHeight < 560;
-  const p3 = Stage3D.available;
-  // masaüstü 3B: gerçek ölçülü kare masa (~1.1 m); masa, eldeki kağıt boyuna göre büyür, kağıtlar küçülmez
-  const sq = p3 && !narrow && !short;
-  const TM = sq ? 1.1 : 2.6; // masanın derinliği (metre)
-  const ks = sq ? 1 : narrow ? 0.62 : 0.85; // oyuncu ölçeği
-  const tilt = narrow ? 36 : camTilt;
-  const cosT = Math.cos((tilt * Math.PI) / 180);
-  // üstteki oyuncunun masanın arkasında kalan boyu; yan oyuncuların masa kenarından dışarı taşan eni
-  let headRoom, availH, sideRoom;
-  if (sq) {
-    const lift = 0.27; // üstte karşıdaki oyuncunun kartı için pay (masa boyuna oranla; kuş bakışında açıdan bağımsız)
-    const fitTH = (H - 12) / (1.15 * cosT + lift);
-    const cardTH = (5.4 * hw) / 0.89; // deste + gösterge + yerdeki yığın tam boy sığsın
-    const TH0 = Math.min(fitTH, cardTH, W / (1 + 1.3 / TM));
-    headRoom = Math.round(lift * TH0 + 12);
-    availH = TH0 * cosT;
-    sideRoom = Math.round((0.6 / TM) * TH0);
-  } else {
-    headRoom = short ? 14 : p3 ? Math.round(H * (narrow ? 0.2 : 0.23)) : PL_AVATAR + 4;
-    availH = (H - headRoom) / 1.2; // kalan pay masanın kalınlığı ve ayakları
-    sideRoom = short ? 34 : p3 ? Math.round(0.23 * (availH / cosT) * ks) + 4 : narrow ? 48 : 54;
-  }
-  const availW = W - 2 * sideRoom;
-  const aspect = sq ? 1 : Math.max(0.8, Math.min(1.7, (availW / availH) * cosT));
-  top.style.setProperty('--tilt', tilt + 'deg');
-  box.style.setProperty('--u', ks);
+  const gap = narrow ? 6 : 14;
+  const av = Math.round(Math.max(44, Math.min(84, H * 0.12)));
+  box.style.setProperty('--av', av + 'px');
+  const hosts = { top: $('pl-top'), left: $('pl-left'), right: $('pl-right'), me: $('pl-me') };
+  const put = (el, x, y) => { el.style.left = Math.round(x) + 'px'; el.style.top = Math.round(y) + 'px'; };
+  const ht = hosts.top;
+  const hm = hosts.me;
+  const sideW = Math.max(hosts.left.offsetWidth, hosts.right.offsetWidth);
+  const ui = $('tableUI');
+  ui.style.maxWidth = narrow ? W - 12 + 'px' : '';
+  // dar ekranda sol üstteki panel üstteki oyuncunun önüne geçmesin
+  const hud = $('hud');
+  const tY = narrow && hud ? Math.max(gap / 2, hud.getBoundingClientRect().bottom - box.getBoundingClientRect().top + 4) : gap / 2;
+  const uiH = narrow ? ui.offsetHeight + gap : 0;
 
-  let TH = availH / cosT;
-  let TW = Math.min(availW, TH * aspect);
-  TH = Math.min(TH, TW / aspect);
-  const apply = () => {
-    const rim = Math.round(Math.max(10, TH * (narrow ? 0.05 : 0.055)));
-    const m = p3 ? Stage3D.metrics(TH, TM) : { thick: Math.round(TH * 0.05), leg: Math.round(TH * 0.13) };
-    top.style.width = TW + 'px';
-    top.style.height = TH + 'px';
-    top.style.left = (W - TW) / 2 + 'px';
-    top.style.setProperty('--S', TH + 'px');
-    top.style.setProperty('--rim', rim + 'px');
-    top.style.setProperty('--T', m.thick + 'px');
-    top.style.setProperty('--L', m.leg + 'px');
-    return rim;
-  };
-  let rim = apply();
-  top.style.top = '0px';
-  for (let i = 0; i < 6; i++) {
-    const rc = top.getBoundingClientRect();
-    const k = Math.min(availW / rc.width, availH / rc.height);
-    if (Math.abs(k - 1) < 0.004) break;
-    TW *= k;
-    TH *= k;
-    rim = apply();
-  }
-  const br = box.getBoundingClientRect();
-  const rc = top.getBoundingClientRect();
-  top.style.top = headRoom - (rc.top - br.top) + 'px';
-  if (zoom !== 1) {
-    // yakınlaş/uzaklaş: masa aynı merkez etrafında büyür, oyuncular 3B'de masayla birlikte hareket eder
-    TW *= zoom;
-    TH *= zoom;
-    rim = apply();
-    top.style.top = '0px';
-    const rc2 = top.getBoundingClientRect();
-    top.style.top = headRoom + rc.height / 2 - rc2.height / 2 + (zoom > 1 ? (zoom - 1) * rc.height * 0.4 : 0) - (rc2.top - br.top) + 'px';
-  }
-
-  // masadaki kağıtlar çuhaya sığsın: orta sıra (deste + gösterge) ve altında yere atılanlar
-  const feltH = TH - 2 * rim;
-  pw = Math.round(Math.max(26, Math.min(sq ? hw * 1.15 : hw, (feltH - 96) / 2.85, (TW - 2 * rim) * (sq ? 0.23 : 0.16))));
+  // orta alan: deste, gösterge ve yere atılan yığın
+  const x0 = sideW + gap * 2;
+  const y0 = tY + ht.offsetHeight + gap / 2;
+  const y1 = H - hm.offsetHeight - gap - uiH;
+  const AW = Math.max(120, W - 2 * x0);
+  const AH = Math.max(120, y1 - y0);
+  top.style.left = x0 + 'px';
+  top.style.top = y0 + 'px';
+  top.style.width = AW + 'px';
+  top.style.height = AH + 'px';
+  top.style.setProperty('--S', AH + 'px');
+  top.style.setProperty('--rim', '0px');
+  pw = Math.round(Math.max(30, Math.min(hw * 0.8, (AH - 70) / 2.5, AW * 0.16)));
   document.documentElement.style.setProperty('--pw', pw + 'px');
 
+  // oyuncu kartları
+  put(ht, W / 2 - ht.offsetWidth / 2, tY);
+  put(hm, W / 2 - hm.offsetWidth / 2, H - hm.offsetHeight - gap / 2);
+  // durum yazısı ve butonlar: benim kartımın sağında
+  if (narrow) put(ui, W / 2 - ui.offsetWidth / 2, H - hm.offsetHeight - gap - ui.offsetHeight);
+  else put(ui, W / 2 + hm.offsetWidth / 2 + gap * 1.5, H - gap / 2 - hm.offsetHeight / 2 - ui.offsetHeight / 2);
+  const midY = y0 + AH / 2;
+  put(hosts.left, gap, midY - hosts.left.offsetHeight / 2);
+  put(hosts.right, W - gap - hosts.right.offsetWidth, midY - hosts.right.offsetHeight / 2);
+
+  // kapalı elleri: üsttekininki kartın sağında, yanlarınki kartın altında
   const ot = $('opp-top');
   const ol = $('opp-left');
   const or = $('opp-right');
-  const put = (el, x, y) => { el.style.left = Math.round(x) + 'px'; el.style.top = Math.round(y) + 'px'; };
-
-  if (p3) {
-    // 3B sahne, masanın CSS perspektifiyle aynı kamerayı kullanır; oyuncular masa koordinatlarında oturur
-    const cx = br.left + parseFloat(top.style.left) + TW / 2;
-    const cy = br.top + parseFloat(top.style.top) + TH / 2;
-    Stage3D.layout({ vw: window.innerWidth, vh: window.innerHeight, ox: br.left + br.width / 2, oy: br.top + br.height * 0.28, cx, cy, TW, TH, tilt, ks, TM }, false);
-  }
-
-  // Oyuncu kartları (portre + bilgi) masanın kenarlarında; kapalı elleri kartın yanında
-  const pt = (sel) => {
-    const r = top.querySelector(sel).getBoundingClientRect();
-    return { x: r.left - br.left, y: r.top - br.top };
-  };
-  const mt = pt('.mk-t');
-  const ml = pt('.mk-l');
-  const mr = pt('.mk-r');
-  const mbl = pt('.mk-bl');
-  const av = Math.round(Math.max(56, Math.min(92, TH * 0.17)));
-  box.style.setProperty('--av', av + 'px');
-  const hosts = { top: $('pl-top'), left: $('pl-left'), right: $('pl-right'), me: $('pl-me') };
-  for (const k in hosts) { hosts[k].style.width = ''; hosts[k].style.height = ''; }
-  const gap = narrow ? 10 : 18;
-  // üst: kart masanın üst kenarının üstünde ortada, kapalı eli kartın sağında
-  const ht = hosts.top;
-  put(ht, mt.x - ht.offsetWidth / 2, mt.y - ht.offsetHeight - gap);
-  put(ot, mt.x + ht.offsetWidth / 2 + 14 + ot.offsetWidth / 2, mt.y - ht.offsetHeight / 2 - gap - ot.offsetHeight / 2);
-  // yanlar: kart masanın yan kenarının dışında, kapalı eli kartın altında
-  [[ol, hosts.left, ml, -1], [or, hosts.right, mr, 1]].forEach(([el, host, m, dir]) => {
-    const w = host.offsetWidth;
-    const x = dir < 0 ? m.x - gap - w : m.x + gap;
-    const y = m.y - host.offsetHeight / 2 - 30;
-    put(host, x, y);
-    put(el, x + w / 2 - el.offsetWidth / 2, y + host.offsetHeight + 8);
-  });
-  // ben: ekranın sol alt köşesinde (CSS ile sabit)
+  put(ot, W / 2 + ht.offsetWidth / 2 + 14, tY + ht.offsetHeight / 2 - ot.offsetHeight / 2);
+  put(ol, gap + hosts.left.offsetWidth / 2 - ol.offsetWidth / 2, midY + hosts.left.offsetHeight / 2 + 8);
+  put(or, W - gap - hosts.right.offsetWidth / 2 - or.offsetWidth / 2, midY + hosts.right.offsetHeight / 2 + 8);
 }
 
 // Bu elde oynayanlar arasında benden önceki oyuncu (finalde 2 kişi)
@@ -2145,3 +2068,56 @@ function openDaily() {
 }
 $('btnDaily').onclick = openDaily;
 $('btnAvatar').onclick = openAvatarPicker;
+
+// ---------- Duvar kağıtları: koyu ve açık temalar (yalnızca arka plan; kağıtların önüne geçmez) ----------
+const svgUri = (w, h, body) => `url("data:image/svg+xml;utf8,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='${w}' height='${h}'>${body}</svg>`)}")`;
+const WALLS = [
+  // koyu
+  { id: 'gece', name: 'Gece mavisi', light: false, bg: `${svgUri(48, 48, "<circle cx='24' cy='24' r='1.2' fill='#fff' fill-opacity='.07'/>")} 0 0 / 48px 48px, radial-gradient(ellipse at 50% 30%, #1f3157, #0b1222 72%)` },
+  { id: 'zumrut', name: 'Zümrüt', light: false, bg: `${svgUri(56, 56, "<path d='M28 4 L52 28 L28 52 L4 28 Z' fill='none' stroke='#fff' stroke-opacity='.05' stroke-width='1.2'/>")} 0 0 / 56px 56px, radial-gradient(ellipse at 50% 35%, #165a43, #062219 75%)` },
+  { id: 'antrasit', name: 'Antrasit', light: false, bg: `${svgUri(60, 104, "<path d='M30 0 L60 17 L60 52 L30 69 L0 52 L0 17 Z M30 69 L30 104' fill='none' stroke='#fff' stroke-opacity='.045' stroke-width='1.4'/>")} 0 0 / 60px 104px, linear-gradient(160deg, #2b2f36, #15171b)` },
+  { id: 'bordo', name: 'Bordo', light: false, bg: `${svgUri(64, 64, "<g fill='none' stroke='#ffd9a0' stroke-opacity='.06' stroke-width='1.3'><path d='M32 6 L58 32 L32 58 L6 32 Z'/><circle cx='32' cy='32' r='7'/></g>")} 0 0 / 64px 64px, radial-gradient(ellipse at 50% 40%, #6a1a2b, #24060d 78%)` },
+  { id: 'mor', name: 'Gece moru', light: false, bg: `${svgUri(40, 40, "<path d='M0 40 L40 0' stroke='#fff' stroke-opacity='.035' stroke-width='1'/>")} 0 0 / 40px 40px, linear-gradient(135deg, #34175a, #120a28)` },
+  { id: 'okyanus', name: 'Okyanus', light: false, bg: `${svgUri(120, 40, "<path d='M0 20 Q30 6 60 20 T120 20' fill='none' stroke='#fff' stroke-opacity='.05' stroke-width='1.5'/>")} 0 0 / 120px 40px, linear-gradient(180deg, #0d4456, #04161e)` },
+  { id: 'karbon', name: 'Karbon', light: false, bg: `repeating-linear-gradient(45deg, rgba(255,255,255,.025) 0 6px, transparent 6px 12px), repeating-linear-gradient(-45deg, rgba(0,0,0,.25) 0 6px, transparent 6px 12px), linear-gradient(#1c1d20, #0c0c0e)` },
+  { id: 'kahve', name: 'Kahve', light: false, bg: `${svgUri(36, 36, "<path d='M0 .5 H36 M.5 0 V36' stroke='#ffe0b0' stroke-opacity='.05'/>")} 0 0 / 36px 36px, radial-gradient(ellipse at 50% 35%, #4a3020, #160d07 78%)` },
+  { id: 'yildiz', name: 'Yıldızlı gece', light: false, bg: `${svgUri(160, 160, "<g fill='#fff'><circle cx='12' cy='20' r='1' fill-opacity='.35'/><circle cx='80' cy='60' r='.8' fill-opacity='.25'/><circle cx='140' cy='14' r='1.2' fill-opacity='.3'/><circle cx='40' cy='120' r='.9' fill-opacity='.22'/><circle cx='120' cy='130' r='1' fill-opacity='.3'/><circle cx='100' cy='96' r='.6' fill-opacity='.2'/></g>")} 0 0 / 160px 160px, radial-gradient(ellipse at 30% 20%, #1a2346, #05060f 75%)` },
+  // açık
+  { id: 'krem', name: 'Krem kâğıt', light: true, bg: `${svgUri(160, 160, "<filter id='n'><feTurbulence baseFrequency='.8' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .4  0 0 0 0 .3  0 0 0 0 .2  0 0 0 .07 0'/></filter><rect width='100%' height='100%' filter='url(#n)'/>")}, linear-gradient(#f6efe0, #eadfc8)` },
+  { id: 'nane', name: 'Nane', light: true, bg: `${svgUri(28, 28, "<circle cx='14' cy='14' r='2' fill='#308a66' fill-opacity='.1'/>")} 0 0 / 28px 28px, linear-gradient(160deg, #e6f6ee, #cfe9dc)` },
+  { id: 'lavanta', name: 'Lavanta', light: true, bg: `${svgUri(24, 24, "<path d='M0 24 L24 0' stroke='#6a4fa0' stroke-opacity='.08' stroke-width='1'/>")} 0 0 / 24px 24px, linear-gradient(160deg, #f1ecfa, #ddd3f0)` },
+  { id: 'seftali', name: 'Şeftali', light: true, bg: `radial-gradient(ellipse at 20% 10%, rgba(255,255,255,.7), transparent 50%), linear-gradient(160deg, #fdeadc, #f5cdb6)` },
+  { id: 'gok', name: 'Gökyüzü', light: true, bg: `${svgUri(200, 120, "<g fill='#fff' fill-opacity='.45'><ellipse cx='50' cy='40' rx='38' ry='12'/><ellipse cx='150' cy='95' rx='30' ry='9'/></g>")} 0 0 / 200px 120px, linear-gradient(#cfe5f8, #eef6fd)` },
+  { id: 'kum', name: 'Kum', light: true, bg: `${svgUri(40, 20, "<path d='M0 10 L10 0 L20 10 L30 0 L40 10 M0 20 L10 10 L20 20 L30 10 L40 20' fill='none' stroke='#8a6a3a' stroke-opacity='.07'/>")} 0 0 / 40px 20px, linear-gradient(#f1e6cf, #e2d1ae)` },
+  { id: 'buz', name: 'Buz grisi', light: true, bg: `${svgUri(60, 52, "<path d='M0 0 L30 52 L60 0 Z' fill='none' stroke='#334' stroke-opacity='.06'/>")} 0 0 / 60px 52px, linear-gradient(160deg, #f2f4f7, #d9dee5)` },
+  { id: 'pembe', name: 'Pudra', light: true, bg: `${svgUri(32, 32, "<circle cx='8' cy='8' r='2.2' fill='#c0607a' fill-opacity='.09'/><circle cx='24' cy='24' r='2.2' fill='#c0607a' fill-opacity='.09'/>")} 0 0 / 32px 32px, linear-gradient(160deg, #fbecf1, #f0d2dc)` },
+  { id: 'limon', name: 'Limon', light: true, bg: `radial-gradient(ellipse at 50% 0%, rgba(255,255,255,.8), transparent 60%), linear-gradient(#faf6d9, #ece2a8)` },
+];
+let wallId = store.get('i51-wall') || 'gece';
+function applyWall(id) {
+  const w = WALLS.find((x) => x.id === id) || WALLS[0];
+  wallId = w.id;
+  store.set('i51-wall', w.id);
+  document.documentElement.style.background = w.bg;
+  document.documentElement.style.backgroundAttachment = 'fixed';
+  document.body.classList.toggle('wp-light', w.light);
+}
+function openWallPicker() {
+  const tile = (w) => `<button class="wpt${w.id === wallId ? ' cur' : ''}" data-id="${w.id}"><span class="wps"></span><span class="wpn">${w.name}</span></button>`;
+  modalKind = 'wall';
+  $('modalBody').innerHTML = `<div class="wppick"><h2>Duvar kağıdı</h2>
+    <h3>Koyu</h3><div class="wpgrid">${WALLS.filter((w) => !w.light).map(tile).join('')}</div>
+    <h3>Açık</h3><div class="wpgrid">${WALLS.filter((w) => w.light).map(tile).join('')}</div>
+    <div class="mbtns"><button id="wpClose">Kapat</button></div></div>`;
+  $('modal').classList.remove('hidden');
+  $('wpClose').onclick = closeModal;
+  $('modalBody').querySelectorAll('.wpt').forEach((b) => {
+    b.querySelector('.wps').style.background = WALLS.find((w) => w.id === b.dataset.id).bg;
+    b.onclick = () => {
+      applyWall(b.dataset.id);
+      $('modalBody').querySelectorAll('.wpt').forEach((x) => x.classList.toggle('cur', x === b));
+    };
+  });
+}
+$('btnWall').onclick = openWallPicker;
+applyWall(wallId);
