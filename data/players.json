@@ -636,7 +636,8 @@
   "gold": 0,
   "created": 1794506637085,
   "streak": 0,
-  "lastDaily": null
+  "lastDaily": null,
+  "acc": {}
  },
  "211dc66dd8c5730f50618592380f63b3": {
   "name": "Erdem",
@@ -782,6 +783,14 @@
   "name": "Erdem",
   "gold": 0,
   "created": 1794510449109,
+  "streak": 0,
+  "lastDaily": null,
+  "acc": {}
+ },
+ "f663e45ab09f53be2f895f2f872ce8c0": {
+  "name": "Erdem",
+  "gold": 0,
+  "created": 1794510496054,
   "streak": 0,
   "lastDaily": null,
   "acc": {}

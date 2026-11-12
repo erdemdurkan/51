@@ -1696,3 +1696,16 @@ body.flat #discardHint, body.flat #tableUI #status { display: none !important; }
 .gag-uyku b { animation: zzz 2.4s ease-out infinite; }
 @keyframes zzz { 0% { transform: translate(0, .2em) scale(.7); opacity: 0; } 25% { opacity: 1; } 100% { transform: translate(.3em, -.8em) scale(1.1); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .gag b, .gx { animation: none !important; } .gx { opacity: 0; } }
+/* Gösterge / okey penceresi: büyük ve net (kağıt, eldeki kağıt boyunda) */
+#showFx { background: rgba(0,0,0,.55); }
+#showFx .fx-box { padding: 26px 48px 24px; border-radius: 22px; min-width: 380px; }
+#showFx .fx-title { font-size: 30px; margin-bottom: 18px; text-shadow: 0 2px 6px rgba(0,0,0,.5); }
+#showFx .fx-card .card { --cw: clamp(130px, var(--hw, 170px), 200px); box-shadow: 0 14px 30px rgba(0,0,0,.55); }
+#showFx .fx-sub { margin-top: 16px; font-size: 19px; color: #f2dcc0; font-weight: 600; }
+#showFx .fx-x { font-size: 140px; }
+@media (max-width: 599px) {
+  #showFx .fx-box { padding: 18px 22px; min-width: 0; max-width: 92vw; }
+  #showFx .fx-title { font-size: 20px; }
+  #showFx .fx-card .card { --cw: 120px; }
+  #showFx .fx-sub { font-size: 15px; }
+}
