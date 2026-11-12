@@ -25,7 +25,7 @@
   "created": 1794090016846,
   "lastDaily": "2026-11-12",
   "streak": 2,
-  "avatar": 23
+  "avatar": 101
  },
  "7293b8afd4a72470ea80a0bb4f32f988": {
   "name": "Oyuncu",
@@ -691,6 +691,34 @@
   "name": "Erdem",
   "gold": 0,
   "created": 1794507725177,
+  "streak": 0,
+  "lastDaily": null
+ },
+ "152c1a88a3cb48cd5a833b0fbfd55e33": {
+  "name": "Erdem",
+  "gold": 0,
+  "created": 1794508498579,
+  "streak": 0,
+  "lastDaily": null
+ },
+ "7ff6255b026afcc352151b69a851dbfa": {
+  "name": "Erdem",
+  "gold": 0,
+  "created": 1794508534683,
+  "streak": 0,
+  "lastDaily": null
+ },
+ "76eade1784d1c0ef13e83fd8decb3876": {
+  "name": "Erdem",
+  "gold": 0,
+  "created": 1794508573918,
+  "streak": 0,
+  "lastDaily": null
+ },
+ "b50bc2d82f94a73792616bbb9cc0d9cb": {
+  "name": "Erdem",
+  "gold": 0,
+  "created": 1794508606959,
   "streak": 0,
   "lastDaily": null
  }

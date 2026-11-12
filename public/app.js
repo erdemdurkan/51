@@ -220,6 +220,8 @@ $('btnJoin').onclick = () => {
 };
 $('joinCode').addEventListener('keydown', (e) => e.key === 'Enter' && $('btnJoin').click());
 
+// Bu cihaz telefon mu (dokunmatik/mobil) bilgisayar mı: masadakiler ismin yanında simgesini görür
+const DEVICE = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || (matchMedia('(pointer: coarse)').matches && !matchMedia('(pointer: fine)').matches) ? 'phone' : 'pc';
 // ---------- Sanal altın ----------
 let pid = store.get('i51-pid');
 let myGold = null;
@@ -230,7 +232,7 @@ function setGold(g) {
   $('myGold').textContent = fmt(g);
 }
 socket.on('connect', () => {
-  socket.emit('hello', { pid, name: store.get('i51-name') || '' }, (res) => {
+  socket.emit('hello', { pid, name: store.get('i51-name') || '', device: DEVICE }, (res) => {
     if (res && res.ok) {
       pid = res.pid; store.set('i51-pid', pid); setGold(res.gold);
       myAvatar = Number.isInteger(res.avatar) ? res.avatar : null;
@@ -1210,9 +1212,12 @@ function playerCard(slot, seat, name, turn, nCards) {
   }
   const tot = totalsOf()[seat];
   const team = g.mode === 'team' && slot !== 'me' ? (seat % 2 === S.mySeat % 2 ? ' <span class="ptag partner">Eşin</span>' : ' <span class="ptag">Rakip</span>') : '';
-  host.querySelector('.pn').innerHTML = `${p && p.bot ? '🤖 ' : ''}${esc(name)}${slot === 'me' ? ' <small>(sen)</small>' : ''}${team}`;
+  const dev = p && p.bot ? '🤖 ' : p && p.device === 'phone' ? '📱 ' : p && p.device === 'pc' ? '💻 ' : '';
+  host.querySelector('.pn').innerHTML = `${dev}${esc(name)}${slot === 'me' ? ' <small>(sen)</small>' : ''}${team}`;
   const gold = slot === 'me' ? myGold : p && p.gold;
-  host.querySelector('.pg').innerHTML = p && p.bot ? 'Bilgisayar' : gold == null ? '🪙 —' : `🪙 ${fmt(gold)}`;
+  const pg = host.querySelector('.pg');
+  pg.innerHTML = p && p.bot ? '' : gold == null ? '🪙 —' : `🪙 ${fmt(gold)}`;
+  pg.style.display = p && p.bot ? 'none' : '';
   host.querySelector('.ps').innerHTML = `Puan <b>${tot}</b>`;
   const out = g.final && g.active.length === 2 && !g.active.includes(seat);
   const shown = g.shown && g.shown.seat === seat ? ' · 🃏 gösterge' : '';
@@ -1240,11 +1245,12 @@ function layoutTable() {
   const hm = hosts.me;
   const sideW = Math.max(hosts.left.offsetWidth, hosts.right.offsetWidth);
   const ui = $('tableUI');
-  ui.style.maxWidth = narrow ? W - 12 + 'px' : '';
+  ui.style.maxWidth = narrow ? Math.max(120, W - hm.offsetWidth - 3 * gap) + 'px' : '';
   // dar ekranda sol üstteki panel üstteki oyuncunun önüne geçmesin
   const hud = $('hud');
-  const tY = narrow && hud ? Math.max(gap / 2, hud.getBoundingClientRect().bottom - box.getBoundingClientRect().top + 4) : gap / 2;
-  const uiH = narrow ? ui.offsetHeight + gap : 0;
+  // geniş ekranda üstteki oyuncu üst çubuğun boş ortasına kadar çıkabilir
+  const tY = narrow && hud ? Math.max(gap / 2, hud.getBoundingClientRect().bottom - box.getBoundingClientRect().top + 4) : -Math.max(0, $('topbar').offsetHeight - 4);
+  const uiH = 0; // telefonda da butonlar benim kartımın yanında (ayrı satır yok)
 
   // orta alan: deste, gösterge ve yere atılan yığın
   const x0 = sideW + gap * 2;
@@ -1258,14 +1264,14 @@ function layoutTable() {
   top.style.height = AH + 'px';
   top.style.setProperty('--S', AH + 'px');
   top.style.setProperty('--rim', '0px');
-  pw = Math.round(Math.max(30, Math.min(hw * 0.8, (AH - 40) / 2.4, AW * 0.16)));
+  pw = Math.round(Math.max(30, Math.min(hw * 0.8, (AH - 70) / 1.55, AW * 0.15)));
   document.documentElement.style.setProperty('--pw', pw + 'px');
 
   // oyuncu kartları
   put(ht, W / 2 - ht.offsetWidth / 2, tY);
-  put(hm, W / 2 - hm.offsetWidth / 2, H - hm.offsetHeight - gap / 2);
+  put(hm, narrow ? gap : W / 2 - hm.offsetWidth / 2, H - hm.offsetHeight - gap / 2); // telefonda sol altta
   // durum yazısı ve butonlar: benim kartımın sağında
-  if (narrow) put(ui, W / 2 - ui.offsetWidth / 2, H - hm.offsetHeight - gap - ui.offsetHeight);
+  if (narrow) put(ui, gap * 2 + hm.offsetWidth, H - gap / 2 - hm.offsetHeight / 2 - ui.offsetHeight / 2);
   else put(ui, W / 2 + hm.offsetWidth / 2 + gap * 1.5, H - gap / 2 - hm.offsetHeight / 2 - ui.offsetHeight / 2);
   const midY = y0 + AH / 2;
   // yanlar: üst/alt gibi ortadaki kağıtlara yakın (deste+gösterge solda, yığın sağda)

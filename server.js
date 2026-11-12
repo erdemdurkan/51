@@ -170,7 +170,7 @@ function broadcast(room) {
       mySeat: seat,
       isHost: p.token === room.hostToken,
       settings: room.settings,
-      seats: room.seats.map((s) => s && { name: s.name, bot: !!s.bot, connected: !!(s.socketId || s.bot), host: s.token === room.hostToken, gold: s.pid ? goldOf(s.pid) : null, avatar: s.pid ? avatarOf(s.pid) : null }),
+      seats: room.seats.map((s) => s && { name: s.name, bot: !!s.bot, connected: !!(s.socketId || s.bot), host: s.token === room.hostToken, gold: s.pid ? goldOf(s.pid) : null, avatar: s.pid ? avatarOf(s.pid) : null, device: s.bot || !s.socketId ? null : ((io.sockets.sockets.get(s.socketId) || {}).data || {}).device || null }),
       myGold: p.pid ? goldOf(p.pid) : null,
       acc: accOf(room),
       money: room.money ? { fee: room.money.fee, pot: room.money.pot, payouts: room.money.payouts || null } : null,
@@ -269,9 +269,10 @@ io.on('connection', (socket) => {
       }
     });
 
-  handle('hello', ({ pid, name }) => {
+  handle('hello', ({ pid, name, device }) => {
     pid = ensureProfile(pid, name);
     socket.data.pid = pid;
+    socket.data.device = device === 'phone' ? 'phone' : 'pc'; // oyuncu telefondan mı bilgisayardan mı bağlı
     return { pid, gold: goldOf(pid), daily: dailyInfo(players[pid]), avatar: avatarOf(pid) };
   });
 
