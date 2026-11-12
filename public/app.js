@@ -1209,7 +1209,7 @@ function playerCard(slot, seat, name, turn, nCards) {
   const key = (av != null ? 'a' + av : 's' + seed) + JSON.stringify(acc);
   if (host.dataset.seed !== key) {
     host.dataset.seed = key;
-    host.innerHTML = `<div class="pcard" title="${slot === 'me' ? 'Aksesuar al / profil resmi' : 'Hediye gönder'}"><div class="pav">${figureSvg(seat, 'av' + slot)}${slot === 'me' ? '<span class="pav-edit">✎</span>' : ''}</div>
+    host.innerHTML = `<div class="pcard" title="${slot === 'me' ? 'Aksesuar al / profil resmi' : 'Hediye gönder'}"><div class="pav">${figureSvg(seat, 'av' + slot)}${acc.gag ? gagHtml(acc.gag) : ''}${slot === 'me' ? '<span class="pav-edit">✎</span>' : ''}</div>
       <div class="pinf"><div class="pn"></div><div class="pg"></div><div class="ps"></div><div class="pc"></div></div></div>`;
     host.querySelector('.pcard').onclick = () => openShop(seat);
   }
@@ -2343,6 +2343,13 @@ applyWall(wallId);
 
 // ---------- Aksesuar dükkânı: kendine al ya da masadakine hediye et (o oyun boyunca takılı) ----------
 const seatSlot = (seat) => (seat === S.mySeat ? 'me' : PL[(seat - S.mySeat + 4) % 4]);
+// Takılma hediyesi: figürün yanında hareketli duran nesne
+function gagHtml(id) {
+  const it = Acc.byId[id];
+  if (!it) return '';
+  const fx = { pecete: '<i class="gx tear">💧</i><i class="gx tear t2">💧</i>', bulut: '<i class="gx drop">💧</i><i class="gx drop d2">💧</i>', uyku: '', domates: '<i class="gx splat"></i>' }[id] || '';
+  return `<span class="gag gag-${id}" title="${esc(it.name)}: ${esc(it.tease || '')}"><b>${it.icon}</b>${fx}</span>`;
+}
 function openShop(seat) {
   if (!S || !S.seats[seat]) return;
   const mine = seat === S.mySeat;
@@ -2351,19 +2358,22 @@ function openShop(seat) {
   const until = (S.accUntil && S.accUntil[seat]) || {};
   const free = !!p.bot; // bilgisayar oyuncusuna hediye ücretsiz
   const left = (t) => { const m = Math.max(0, Math.round((t - Date.now()) / 60000)); return m >= 60 ? `${Math.floor(m / 60)} sa ${m % 60} dk` : `${m} dk`; };
-  const tiles = Acc.ITEMS.map((it) => {
+  const tile = (it) => {
     const on = cur[it.slot] === it.id;
     const poor = !free && (myGold || 0) < it.price;
     // her kutucukta figür o aksesuarla birlikte görünür
     return `<button class="shi${on ? ' on' : ''}${poor && !on ? ' poor' : ''}" data-id="${it.id}"${on ? ' disabled' : ''}>
-      <span class="shf">${figureSvg(seat, 'sh' + seat + it.id, { [it.slot]: it.id })}</span>
-      <span class="shn">${it.icon} ${it.name}</span>
+      <span class="shf">${figureSvg(seat, 'sh' + seat + it.id, { [it.slot]: it.id })}${it.slot === 'gag' ? gagHtml(it.id) : ''}</span>
+      <span class="shn">${it.icon} ${it.name}</span>${it.tease ? `<span class="sht">“${it.tease}”</span>` : ''}
       <span class="shp">${on ? `${mine ? 'Takılı' : 'Onda var'} · ${left(until[it.slot])} kaldı` : free ? 'Ücretsiz' : '🪙 ' + fmt(it.price)}</span></button>`;
-  }).join('');
+  };
+  const tiles = Acc.ITEMS.filter((it) => it.slot !== 'gag').map(tile).join('');
+  const gags = Acc.ITEMS.filter((it) => it.slot === 'gag').map(tile).join('');
   modalKind = 'shop';
   $('modalBody').innerHTML = `<div class="shop"><h2>${mine ? 'Kendine aksesuar al' : `${esc(p.name)} için hediye seç`}</h2>
     <p class="muted">Altının: <b>🪙 ${fmt(myGold || 0)}</b> · Aksesuarlar alındığı andan 24 saat takılı kalır.${free ? ' Bilgisayar oyuncusuna hediye ücretsiz.' : mine ? '' : ' Hediyeyi masadaki herkes görür.'}</p>
-    <div class="shgrid">${tiles}</div>
+    <h3 class="shsec">Aksesuarlar</h3><div class="shgrid">${tiles}</div>
+    <h3 class="shsec">😜 Takılma hediyeleri <small>figürün yanında durur · aynı anda bir tane</small></h3><div class="shgrid">${gags}</div>
     <div class="mbtns">${mine ? '<button id="shAv">🖼 Profil resmini değiştir</button>' : ''}<button id="shClose">Kapat</button></div></div>`;
   $('modal').classList.remove('hidden');
   $('shClose').onclick = closeModal;

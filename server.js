@@ -92,6 +92,19 @@ const ACC = {
   gozluk: { slot: 'eyes', price: 150, name: 'gözlük' }, gunes: { slot: 'eyes', price: 200, name: 'güneş gözlüğü' },
   kolye: { slot: 'neck', price: 250, name: 'altın kolye' },
   sapka: { slot: 'head', price: 250, name: 'fötr şapka' }, tac: { slot: 'head', price: 300, name: 'taç' },
+  // takılma hediyeleri: figürün yanında durur (aynı anda bir tane)
+  pecete: { slot: 'gag', price: 40, name: 'peçete' },
+  biberon: { slot: 'gag', price: 40, name: 'biberon' },
+  kaplumbaga: { slot: 'gag', price: 50, name: 'kaplumbağa' },
+  salyangoz: { slot: 'gag', price: 50, name: 'salyangoz' },
+  limon: { slot: 'gag', price: 30, name: 'limon' },
+  domates: { slot: 'gag', price: 30, name: 'domates' },
+  kumsaati: { slot: 'gag', price: 40, name: 'kum saati' },
+  bayrak: { slot: 'gag', price: 60, name: 'beyaz bayrak' },
+  bulut: { slot: 'gag', price: 60, name: 'yağmur bulutu' },
+  buyutec: { slot: 'gag', price: 50, name: 'büyüteç' },
+  palyaco: { slot: 'gag', price: 80, name: 'palyaço' },
+  uyku: { slot: 'gag', price: 40, name: 'uyku' },
 };
 // Aksesuar alındığı andan 24 saat sonra düşer (14:21'de alınan, ertesi gün 14:21'de).
 // Gerçek oyuncuda profilinde durur (her masada görünür); bilgisayar oyuncusunda o koltukta.

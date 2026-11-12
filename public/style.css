@@ -1645,3 +1645,54 @@ body.flat #discardHint, body.flat #tableUI #status { display: none !important; }
 .prk.r2 { background: linear-gradient(#f2f2f2, #a9b0ba); color: #1d1f24; }
 .prk.r3 { background: linear-gradient(#f0b27a, #a8642a); color: #2a1400; }
 .prk.r4 { background: rgba(255,255,255,.14); color: #e8dcc8; }
+/* ---------- Takılma hediyeleri: figürün hemen yanında hareketli nesne ---------- */
+.gag { position: absolute; right: -16%; bottom: 14%; z-index: 3; width: 0; height: 0; pointer-events: none; font-size: calc(var(--av, 64px) * .62); line-height: 1; }
+.gag b { position: absolute; left: -.5em; bottom: 0; display: block; filter: drop-shadow(0 4px 6px rgba(0,0,0,.45)); animation: gagBob 2.4s ease-in-out infinite; }
+#pl-right .gag { right: auto; left: -16%; }
+.shf { position: relative; }
+.shf .gag { font-size: 34px; right: 2%; bottom: 18%; }
+.sht { font-size: 11.5px; color: #cbb592; font-style: italic; text-align: center; line-height: 1.2; }
+.shsec { margin: 14px 0 0; font-size: 15px; color: #ffd27a; }
+.shsec small { font-weight: 500; color: #b8a080; font-size: 12px; margin-left: 6px; }
+.gx { position: absolute; font-style: normal; pointer-events: none; }
+@keyframes gagBob { 0%, 100% { transform: translateY(0) rotate(-4deg); } 50% { transform: translateY(-12%) rotate(4deg); } }
+/* peçete: sallanır, gözyaşı damlar */
+.gag-pecete .tear { font-size: .38em; left: -.62em; bottom: .7em; opacity: 0; animation: tear 1.6s ease-in infinite; }
+.gag-pecete .tear.t2 { left: -.1em; animation-delay: .8s; }
+@keyframes tear { 0% { opacity: 0; transform: translateY(0); } 20% { opacity: 1; } 100% { opacity: 0; transform: translateY(1.6em); } }
+/* biberon: sallanır */
+.gag-biberon b { animation: rock 1.4s ease-in-out infinite; transform-origin: 50% 90%; }
+@keyframes rock { 0%, 100% { transform: rotate(-18deg); } 50% { transform: rotate(18deg); } }
+/* kaplumbağa, salyangoz: yavaşça ileri geri yürür */
+.gag-kaplumbaga b { animation: crawl 7s linear infinite; }
+.gag-salyangoz b { animation: crawl 10s linear infinite; }
+@keyframes crawl { 0% { transform: translateX(-.25em) scaleX(1); } 49% { transform: translateX(.35em) scaleX(1); } 50% { transform: translateX(.35em) scaleX(-1); } 99% { transform: translateX(-.25em) scaleX(-1); } 100% { transform: translateX(-.25em) scaleX(1); } }
+/* limon: sıkılır */
+.gag-limon b { animation: squeeze 1.2s ease-in-out infinite; }
+@keyframes squeeze { 0%, 100% { transform: scale(1, 1); } 50% { transform: scale(1.25, .78); } }
+/* domates: fırlatılır, çarpar, ezilir */
+.gag-domates b { animation: toss 2.6s ease-in infinite; }
+.gag-domates .splat { left: -.55em; bottom: -.08em; width: 1.1em; height: .28em; border-radius: 50%; background: #d8322a; opacity: 0; animation: splat 2.6s ease-out infinite; }
+@keyframes toss { 0% { transform: translate(1.2em, -1.4em) rotate(0); opacity: 0; } 10% { opacity: 1; } 45% { transform: translate(0, 0) rotate(260deg) scale(1); } 52% { transform: translate(0, .05em) rotate(260deg) scale(1.25, .7); } 100% { transform: translate(0, .05em) rotate(260deg) scale(1.25, .7); opacity: 1; } }
+@keyframes splat { 0%, 44% { opacity: 0; transform: scale(.3); } 52% { opacity: .85; transform: scale(1.15); } 100% { opacity: .7; transform: scale(1); } }
+/* kum saati: ters döner */
+.gag-kumsaati b { animation: flip 2.4s ease-in-out infinite; }
+@keyframes flip { 0%, 40% { transform: rotate(0); } 50%, 90% { transform: rotate(180deg); } 100% { transform: rotate(360deg); } }
+/* beyaz bayrak: dalgalanır */
+.gag-bayrak b { animation: wave 1s ease-in-out infinite; transform-origin: 20% 100%; }
+@keyframes wave { 0%, 100% { transform: rotate(-10deg) skewY(0); } 50% { transform: rotate(8deg) skewY(-6deg); } }
+/* yağmur bulutu: süzülür, damlalar düşer */
+.gag-bulut b { bottom: .7em; animation: drift 3s ease-in-out infinite; }
+.gag-bulut .drop { font-size: .32em; left: -.9em; bottom: 1.4em; opacity: 0; animation: tear 1.1s ease-in infinite; }
+.gag-bulut .drop.d2 { left: -.2em; animation-delay: .55s; }
+@keyframes drift { 0%, 100% { transform: translateX(-.08em); } 50% { transform: translateX(.08em); } }
+/* büyüteç: daire çizerek arar */
+.gag-buyutec b { animation: scan 2.2s linear infinite; }
+@keyframes scan { 0% { transform: translate(0, 0) rotate(0); } 25% { transform: translate(.15em, -.15em) rotate(10deg); } 50% { transform: translate(0, -.3em) rotate(0); } 75% { transform: translate(-.15em, -.15em) rotate(-10deg); } 100% { transform: translate(0, 0) rotate(0); } }
+/* palyaço: zıplar */
+.gag-palyaco b { animation: hop .9s cubic-bezier(.3,.6,.4,1) infinite; }
+@keyframes hop { 0%, 100% { transform: translateY(0) scale(1.05, .95); } 50% { transform: translateY(-.35em) scale(.95, 1.05); } }
+/* uyku: Zzz yukarı süzülür */
+.gag-uyku b { animation: zzz 2.4s ease-out infinite; }
+@keyframes zzz { 0% { transform: translate(0, .2em) scale(.7); opacity: 0; } 25% { opacity: 1; } 100% { transform: translate(.3em, -.8em) scale(1.1); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .gag b, .gx { animation: none !important; } .gx { opacity: 0; } }

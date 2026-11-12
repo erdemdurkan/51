@@ -13,6 +13,19 @@ const Acc = (() => {
     { id: 'kolye', name: 'Altın kolye', slot: 'neck', price: 250, icon: '📿' },
     { id: 'sapka', name: 'Fötr şapka', slot: 'head', price: 250, icon: '🎩' },
     { id: 'tac', name: 'Taç', slot: 'head', price: 300, icon: '👑' },
+    // takılma hediyeleri: figürün hemen yanında hareketli durur (slot 'gag')
+    { id: 'pecete', name: 'Peçete', slot: 'gag', price: 40, icon: '🧻', tease: 'Ağlamasın diye' },
+    { id: 'biberon', name: 'Biberon', slot: 'gag', price: 40, icon: '🍼', tease: 'Bebek gibi oynuyor' },
+    { id: 'kaplumbaga', name: 'Kaplumbağa', slot: 'gag', price: 50, icon: '🐢', tease: 'Çok yavaş oynuyor' },
+    { id: 'salyangoz', name: 'Salyangoz', slot: 'gag', price: 50, icon: '🐌', tease: 'Salyangoz hızında' },
+    { id: 'limon', name: 'Limon', slot: 'gag', price: 30, icon: '🍋', tease: 'Ekşi surat' },
+    { id: 'domates', name: 'Domates', slot: 'gag', price: 30, icon: '🍅', tease: 'Yuh!' },
+    { id: 'kumsaati', name: 'Kum saati', slot: 'gag', price: 40, icon: '⏳', tease: 'Seni bekliyoruz…' },
+    { id: 'bayrak', name: 'Beyaz bayrak', slot: 'gag', price: 60, icon: '🏳️', tease: 'Pes et artık' },
+    { id: 'bulut', name: 'Yağmur bulutu', slot: 'gag', price: 60, icon: '🌧️', tease: 'Şanssız günündesin' },
+    { id: 'buyutec', name: 'Büyüteç', slot: 'gag', price: 50, icon: '🔍', tease: 'Kağıtları göremiyor mu?' },
+    { id: 'palyaco', name: 'Palyaço', slot: 'gag', price: 80, icon: '🤡', tease: 'Masanın palyaçosu' },
+    { id: 'uyku', name: 'Uyku', slot: 'gag', price: 40, icon: '💤', tease: 'Uyuma, sıra sende!' },
   ];
   const byId = Object.fromEntries(ITEMS.map((x) => [x.id, x]));
   // insan yüzü (avatar.js) varsayılan noktalar
