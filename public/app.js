@@ -2255,14 +2255,14 @@ const WALLS = [
   { id: 'a-kelebek', name: 'Uçan kelebekler', anim: 'kelebek', icon: '🦋', light: false, bg: 'radial-gradient(ellipse at 50% 30%, #24504a, #0c1f24 75%)' },
   { id: 'a-kar', name: 'Kar yağışı', anim: 'kar', icon: '❄️', light: false, bg: 'radial-gradient(ellipse at 50% 20%, #23365c, #070c18 78%)' },
   { id: 'a-yildiz', name: 'Kayan yıldızlar', anim: 'yildiz', icon: '🌠', light: false, bg: 'radial-gradient(ellipse at 30% 20%, #18204a, #03040c 75%)' },
-  { id: 'a-atesbocegi', name: 'Ateş böcekleri', anim: 'atesbocegi', icon: '✨', light: false, bg: 'radial-gradient(ellipse at 50% 60%, #16351f, #040b06 78%)' },
+  { id: 'a-atesbocegi', name: 'Ateş böcekleri', anim: 'atesbocegi', icon: '✨', light: false, bg: 'radial-gradient(ellipse at 50% 40%, #1a2f5e, #070e24 78%)' },
   { id: 'a-baloncuk', name: 'Baloncuklar', anim: 'baloncuk', icon: '🫧', light: false, bg: 'linear-gradient(180deg, #0d5a78, #03202e)' },
   { id: 'a-yaprak', name: 'Sonbahar yaprakları', anim: 'yaprak', icon: '🍂', light: false, bg: 'radial-gradient(ellipse at 50% 30%, #4a2c18, #160b05 78%)' },
   { id: 'a-aurora', name: 'Kuzey ışıkları', anim: 'aurora', icon: '🌌', light: false, bg: 'linear-gradient(180deg, #040814, #0b1630)' },
   { id: 'a-yagmur', name: 'Yağmur', anim: 'yagmur', icon: '🌧️', light: false, bg: 'linear-gradient(180deg, #2c323c, #101318)' },
   { id: 'a-sakura', name: 'Sakura', anim: 'sakura', icon: '🌸', light: true, bg: 'linear-gradient(160deg, #fdf0f4, #f2d3de)' },
 ];
-let wallId = store.get('i51-wall') || 'gece';
+let wallId = store.get('i51-wall') || 'a-atesbocegi'; // ilk girişte ateş böcekleri (lacivert)
 function applyWall(id) {
   const w = WALLS.find((x) => x.id === id) || WALLS[0];
   wallId = w.id;

@@ -125,13 +125,19 @@ const WpAnim = (() => {
         p.y += Math.sin(p.a) * p.s * dt;
         wrap(p, 10);
         const k = 0.5 + 0.5 * Math.sin(t * p.sp + p.ph);
-        const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, 10);
-        g.addColorStop(0, `rgba(230,255,140,${0.9 * k})`);
-        g.addColorStop(1, 'rgba(230,255,140,0)');
+        const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, 14);
+        g.addColorStop(0, `rgba(240,255,150,${0.95 * k})`);
+        g.addColorStop(0.35, `rgba(220,255,120,${0.45 * k})`);
+        g.addColorStop(1, 'rgba(220,255,120,0)');
         ctx.globalAlpha = 1;
         ctx.fillStyle = g;
         ctx.beginPath();
-        ctx.arc(p.x, p.y, 10, 0, Math.PI * 2);
+        ctx.arc(p.x, p.y, 14, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 0.35 + 0.65 * k; // parlak çekirdek
+        ctx.fillStyle = '#fbffd8';
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 1.8, 0, Math.PI * 2);
         ctx.fill();
       },
     },
