@@ -21,12 +21,17 @@
  },
  "bf264ccc3d7b14382b44e25883dbe6a6": {
   "name": "Erdem",
-  "gold": 3250,
+  "gold": 3200,
   "created": 1794090016846,
   "lastDaily": "2026-11-12",
   "streak": 2,
   "avatar": 101,
-  "acc": {}
+  "acc": {
+   "mouth": {
+    "id": "sigara",
+    "until": 1794595125460
+   }
+  }
  },
  "7293b8afd4a72470ea80a0bb4f32f988": {
   "name": "Oyuncu",
@@ -650,7 +655,8 @@
   "gold": 0,
   "created": 1794507095279,
   "streak": 0,
-  "lastDaily": null
+  "lastDaily": null,
+  "acc": {}
  },
  "bacaeed700644682294f8a2eb0705e67": {
   "name": "Erdem",
@@ -735,5 +741,13 @@
     "until": 1794595092772
    }
   }
+ },
+ "77f14a08dafe933634c1edf7fb1bc84a": {
+  "name": "Erdem",
+  "gold": 0,
+  "created": 1794508914382,
+  "streak": 0,
+  "lastDaily": null,
+  "acc": {}
  }
 }

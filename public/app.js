@@ -1264,7 +1264,7 @@ function layoutTable() {
   top.style.height = AH + 'px';
   top.style.setProperty('--S', AH + 'px');
   top.style.setProperty('--rim', '0px');
-  pw = Math.round(Math.max(30, Math.min(hw * 0.8, (AH - 70) / 1.55, AW * 0.15)));
+  pw = Math.round(Math.max(30, Math.min(hw * 0.95, (AH - 50) / 1.45, AW * 0.17)));
   document.documentElement.style.setProperty('--pw', pw + 'px');
 
   // oyuncu kartları

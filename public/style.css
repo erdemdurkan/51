@@ -1610,3 +1610,4 @@ body.flat #felt, body.flat #tableTop { overflow: visible; }
   body.flat .pav, body.flat .pl.turn .pav, body.flat .pl.me#pl-me .pav { width: calc(var(--av, 48px) * 1.45); height: calc(var(--av, 48px) * 1.45); }
 }
 @media (max-width: 599px) { body.flat .pav, body.flat .pl.turn .pav, body.flat .pl.me#pl-me .pav { width: calc(var(--av, 48px) * 1.2); height: calc(var(--av, 48px) * 1.2); } body.flat #tableUI { align-items: flex-start; } }
+body.flat #discardHint, body.flat #tableUI #status { display: none !important; }
