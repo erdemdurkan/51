@@ -1717,3 +1717,4 @@ html, body, * { scrollbar-width: none; -ms-overflow-style: none; }
 .shgrid { max-height: none; overflow: visible; }
 .shi:hover:not(:disabled) { transform: translateY(-2px); }
 #pl-me .gag { right: auto; left: -16%; } /* benim takılma hediyem solda: sağda butonlar var */
+#pl-left .gag { right: auto; left: -16%; } #pl-right .gag { left: auto; right: -16%; } /* soldakinin solunda, sağdakinin sağında */
