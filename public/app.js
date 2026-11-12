@@ -2251,6 +2251,16 @@ const WALLS = [
   { id: 'buz', name: 'Buz grisi', light: true, bg: `${svgUri(60, 52, "<path d='M0 0 L30 52 L60 0 Z' fill='none' stroke='#334' stroke-opacity='.06'/>")} 0 0 / 60px 52px, linear-gradient(160deg, #f2f4f7, #d9dee5)` },
   { id: 'pembe', name: 'Pudra', light: true, bg: `${svgUri(32, 32, "<circle cx='8' cy='8' r='2.2' fill='#c0607a' fill-opacity='.09'/><circle cx='24' cy='24' r='2.2' fill='#c0607a' fill-opacity='.09'/>")} 0 0 / 32px 32px, linear-gradient(160deg, #fbecf1, #f0d2dc)` },
   { id: 'limon', name: 'Limon', light: true, bg: `radial-gradient(ellipse at 50% 0%, rgba(255,255,255,.8), transparent 60%), linear-gradient(#faf6d9, #ece2a8)` },
+  // animasyonlu (wpanim.js arka plan tuvalinde oynar)
+  { id: 'a-kelebek', name: 'Uçan kelebekler', anim: 'kelebek', icon: '🦋', light: false, bg: 'radial-gradient(ellipse at 50% 30%, #24504a, #0c1f24 75%)' },
+  { id: 'a-kar', name: 'Kar yağışı', anim: 'kar', icon: '❄️', light: false, bg: 'radial-gradient(ellipse at 50% 20%, #23365c, #070c18 78%)' },
+  { id: 'a-yildiz', name: 'Kayan yıldızlar', anim: 'yildiz', icon: '🌠', light: false, bg: 'radial-gradient(ellipse at 30% 20%, #18204a, #03040c 75%)' },
+  { id: 'a-atesbocegi', name: 'Ateş böcekleri', anim: 'atesbocegi', icon: '✨', light: false, bg: 'radial-gradient(ellipse at 50% 60%, #16351f, #040b06 78%)' },
+  { id: 'a-baloncuk', name: 'Baloncuklar', anim: 'baloncuk', icon: '🫧', light: false, bg: 'linear-gradient(180deg, #0d5a78, #03202e)' },
+  { id: 'a-yaprak', name: 'Sonbahar yaprakları', anim: 'yaprak', icon: '🍂', light: false, bg: 'radial-gradient(ellipse at 50% 30%, #4a2c18, #160b05 78%)' },
+  { id: 'a-aurora', name: 'Kuzey ışıkları', anim: 'aurora', icon: '🌌', light: false, bg: 'linear-gradient(180deg, #040814, #0b1630)' },
+  { id: 'a-yagmur', name: 'Yağmur', anim: 'yagmur', icon: '🌧️', light: false, bg: 'linear-gradient(180deg, #2c323c, #101318)' },
+  { id: 'a-sakura', name: 'Sakura', anim: 'sakura', icon: '🌸', light: true, bg: 'linear-gradient(160deg, #fdf0f4, #f2d3de)' },
 ];
 let wallId = store.get('i51-wall') || 'gece';
 function applyWall(id) {
@@ -2260,13 +2270,15 @@ function applyWall(id) {
   document.documentElement.style.background = w.bg;
   document.documentElement.style.backgroundAttachment = 'fixed';
   document.body.classList.toggle('wp-light', w.light);
+  WpAnim.set(w.anim || null);
 }
 function openWallPicker() {
-  const tile = (w) => `<button class="wpt${w.id === wallId ? ' cur' : ''}" data-id="${w.id}"><span class="wps"></span><span class="wpn">${w.name}</span></button>`;
+  const tile = (w) => `<button class="wpt${w.id === wallId ? ' cur' : ''}" data-id="${w.id}"><span class="wps">${w.icon ? `<i>${w.icon}</i>` : ''}</span><span class="wpn">${w.name}</span></button>`;
   modalKind = 'wall';
   $('modalBody').innerHTML = `<div class="wppick"><h2>Duvar kağıdı</h2>
-    <h3>Koyu</h3><div class="wpgrid">${WALLS.filter((w) => !w.light).map(tile).join('')}</div>
-    <h3>Açık</h3><div class="wpgrid">${WALLS.filter((w) => w.light).map(tile).join('')}</div>
+    <h3>Koyu</h3><div class="wpgrid">${WALLS.filter((w) => !w.anim && !w.light).map(tile).join('')}</div>
+    <h3>Açık</h3><div class="wpgrid">${WALLS.filter((w) => !w.anim && w.light).map(tile).join('')}</div>
+    <h3>Animasyonlu</h3><div class="wpgrid">${WALLS.filter((w) => w.anim).map(tile).join('')}</div>
     <div class="mbtns"><button id="wpClose">Kapat</button></div></div>`;
   $('modal').classList.remove('hidden');
   $('wpClose').onclick = closeModal;
