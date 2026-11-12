@@ -442,6 +442,20 @@ function moveTo(id, gap) {
   saveHand();
   layoutHand();
 }
+// Grubu bırakılan yere taşı: arka katta ayrı grup olarak, ön sırada araya
+function moveGroupTo(ids, gap) {
+  removeEverywhere(ids);
+  if (gap.row === 1 || gap.row === 2) {
+    const arr = rowArr(gap.row).slice();
+    arr.splice(backPos(arr, gap.idx), 0, null, ...ids, null);
+    setRowArr(gap.row, arr);
+  } else {
+    hand.order.splice(Math.max(0, Math.min(gap.idx, hand.order.length)), 0, ...ids);
+  }
+  FX.play('pick');
+  saveHand();
+  layoutHand();
+}
 // Grubu bir kat yukarı taşı: ön sıra -> arka kat (en fazla 2 kat)
 function liftGroup(ids, from = 0) {
   const to = from + 1;
@@ -565,6 +579,7 @@ function fanArc(n, narrow, back) {
   return { mid, step, k };
 }
 function layoutHand(dragId = null, gap = null) {
+  const ex = new Set([].concat(dragId || []));
   const box = $('hand');
   const W = box.clientWidth || window.innerWidth;
   const narrow = window.innerWidth < 600;
@@ -574,11 +589,11 @@ function layoutHand(dragId = null, gap = null) {
   let zone = $('backZone');
   if (!zone) { zone = document.createElement('div'); zone.id = 'backZone'; box.prepend(zone); }
   zone.style.height = T.front + hw * 0.3 + 'px';
-  zone.textContent = hand.back.length || hand.back2.length ? '' : 'Perleri buraya taşı';
+  zone.textContent = hand.back.length || hand.back2.length ? '' : 'Perleri ve çiftleri buraya sürükle';
   zone.classList.toggle('hover', !!gap && gap.row !== 'front');
 
   // ön sıra
-  const front = hand.order.filter((id) => id !== dragId);
+  const front = hand.order.filter((id) => !ex.has(id));
   if (gap && gap.row === 'front') front.splice(gap.idx, 0, null);
   const n = front.length;
   const Gf = rowGeo(n - 1, W, hw * 0.6);
@@ -604,7 +619,7 @@ function layoutHand(dragId = null, gap = null) {
   for (const r of [1, 2]) {
     const top = r === 1 ? T.r1 : T.r2;
     if (top == null) continue;
-    let arr = cleanBack(rowArr(r).filter((id) => id !== dragId));
+    let arr = cleanBack(rowArr(r).filter((id) => !ex.has(id)));
     if (gap && gap.row === r) arr.splice(backPos(arr, gap.idx), 0, 'GAP');
     const B = backLayout(arr, W);
     spOf[r] = B.sp;
@@ -655,7 +670,7 @@ function layoutHand(dragId = null, gap = null) {
     });
     box.addEventListener('pointerleave', release);
   }
-  const mk = (text, cls, left, top, fn, title) => {
+  const mk = (text, cls, left, top, ids, title) => {
     const b = document.createElement('button');
     b.className = 'mbtn ' + cls;
     b.dataset.g = gk;
@@ -664,8 +679,7 @@ function layoutHand(dragId = null, gap = null) {
     if (title) b.title = title;
     b.style.left = left + 'px';
     b.style.top = top + 'px';
-    b.addEventListener('pointerdown', (e) => e.stopPropagation());
-    b.onclick = (e) => { e.stopPropagation(); fn(); };
+    b.addEventListener('pointerdown', (e) => { e.stopPropagation(); e.preventDefault(); startDrag(e, 'group', ids, b); });
     box.appendChild(b);
   };
   findGroups(hand.order, byId).forEach((g) => {
@@ -673,7 +687,7 @@ function layoutHand(dragId = null, gap = null) {
     const isLastCard = hand.order[hand.order.length - 1] === last;
     const right = fx[last] + (isLastCard ? hw : Math.min(Gf.sp, hw));
     tag(g);
-    mk(g.kind === 'per' ? '⬆ Per taşı' : '⬆ Çift taşı', g.kind === 'per' ? 'per' : 'pair', right - 62, T.front - 24, () => liftGroup(g, 0), g.kind === 'per' ? 'Bu peri arka kata taşı' : 'Bu çifti arka kata taşı');
+    mk(g.kind === 'per' ? 'Per' : 'Çift', g.kind === 'per' ? 'per' : 'pair', right - 46, T.front - 24, g, 'Basılı tutup sürükle: sağa, sola ya da üst sıraya');
   });
   for (const r of [1, 2]) {
     const top = r === 1 ? T.r1 : T.r2;
@@ -683,12 +697,13 @@ function layoutHand(dragId = null, gap = null) {
       const x = pos[r][last] + Math.min(spOf[r], hw) - 2;
       const y = Math.max(0, top - 18);
       tag(g);
-      mk('⬇', 'down', x, y, () => dropGroup(g, r), 'Bir kat aşağı');
+      mk(g.length >= 3 ? 'Per' : 'Çift', g.length >= 3 ? 'per' : 'pair', x - 40, y, g, 'Basılı tutup sürükle: sağa, sola ya da alt sıraya');
     });
   }
 }
 // Sürüklenen kağıt elin neresine düşer: hangi kat, kaçıncı sıra
 function gapAt(px, py, dragId) {
+  const ex = new Set([].concat(dragId || []));
   const box = $('hand');
   const r = box.getBoundingClientRect();
   const W = box.clientWidth;
@@ -697,12 +712,12 @@ function gapAt(px, py, dragId) {
   const T = rowTops();
   const backRow = T.r2 != null && y < T.r1 ? 2 : y < T.front ? 1 : 0;
   if (backRow) {
-    const back = cleanBack(rowArr(backRow).filter((id) => id !== dragId));
+    const back = cleanBack(rowArr(backRow).filter((id) => !ex.has(id)));
     const B = backLayout(back, W);
     const idx = B.xs.filter((bxv) => bxv + Math.max(B.sp, hw * 0.3) / 2 < x).length;
     return { row: backRow, idx };
   }
-  const n = hand.order.filter((id) => id !== dragId).length + 1;
+  const n = hand.order.filter((id) => !ex.has(id)).length + 1;
   const G = rowGeo(n - 1, W, hw * 0.6);
   const idx = n <= 1 || G.sp <= 0 ? 0 : Math.max(0, Math.min(n - 1, Math.floor((x - G.x0) / G.sp)));
   return { row: 'front', idx };
@@ -864,6 +879,7 @@ let drag = null;
 function startDrag(e, kind, id, el) {
   if (e.button > 0) return;
   drag = { kind, id, el, x0: e.clientX, y0: e.clientY, moved: false, ghost: null, gap: null, gk: null };
+  if (kind === 'group') { drag.ids = id; drag.id = null; drag.cards = id.map((x) => handEls.get(x)).filter(Boolean); }
 }
 function overHand(x, y) {
   const r = $('hand').getBoundingClientRect();
@@ -875,7 +891,24 @@ document.addEventListener('pointermove', (e) => {
     if (Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0) < 6) return;
     drag.moved = true;
     FX.play('pick');
-    const r = drag.el.getBoundingClientRect();
+    if (drag.kind === 'group') {
+      // grubun kağıtları yan yana, birlikte taşınır
+      const cw = hw;
+      const sp = cw * 0.42;
+      drag.ghost = document.createElement('div');
+      drag.ghost.className = 'ghost group-ghost';
+      drag.ghost.style.cssText = `width:${cw + sp * (drag.cards.length - 1)}px;height:${cw * 1.4}px`;
+      drag.cards.forEach((c, i) => {
+        const k = c.cloneNode(true);
+        k.classList.remove('sel', 'dragging', 'back-row');
+        k.style.cssText = `position:absolute;left:${i * sp}px;top:0;width:${cw}px;height:${cw * 1.4}px;--cw:${cw}px;transform:none`;
+        drag.ghost.appendChild(k);
+      });
+      drag.dx = (cw + sp * (drag.cards.length - 1)) / 2;
+      drag.dy = cw * 0.5;
+      document.body.appendChild(drag.ghost);
+      drag.cards.forEach((c) => c.classList.add('dragging'));
+    } else {
     drag.ghost = drag.el.cloneNode(true);
     drag.ghost.classList.add('ghost');
     drag.ghost.classList.remove('sel', 'dragging');
@@ -884,13 +917,14 @@ document.addEventListener('pointermove', (e) => {
     drag.dy = drag.el.offsetHeight * 0.4;
     document.body.appendChild(drag.ghost);
     if (drag.kind === 'card') drag.el.classList.add('dragging');
+    }
   }
   drag.ghost.style.left = e.clientX - drag.dx + 'px';
   drag.ghost.style.top = e.clientY - drag.dy + 'px';
   const inHand = overHand(e.clientX, e.clientY);
-  const dragId = drag.kind === 'card' ? drag.id : null;
+  const dragId = drag.kind === 'card' ? drag.id : drag.kind === 'group' ? drag.ids : null;
   const gap = inHand ? gapAt(e.clientX, e.clientY, dragId) : null;
-  $('hand').classList.toggle('hover', inHand && drag.kind !== 'card');
+  $('hand').classList.toggle('hover', inHand && drag.kind !== 'card' && drag.kind !== 'group');
   const gk = gap ? `${gap.row}:${gap.idx}` : null;
   if (gk !== drag.gk) {
     drag.gk = gk;
@@ -912,7 +946,9 @@ function endDrag(e, cancel) {
   let dropRect = null;
   if (d.ghost) { dropRect = d.ghost.getBoundingClientRect(); d.ghost.remove(); }
   d.el.classList.remove('dragging');
+  if (d.cards) d.cards.forEach((c) => c.classList.remove('dragging'));
   if (cancel) { layoutHand(); return; }
+  if (d.kind === 'group') return d.moved && d.gap != null ? moveGroupTo(d.ids, d.gap) : layoutHand(); // tıklama bir şey yapmaz
   if (!d.moved) return onTap(d);
   const t = document.elementFromPoint(e.clientX, e.clientY);
   if (d.kind === 'card') {

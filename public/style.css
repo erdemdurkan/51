@@ -1528,3 +1528,8 @@ body.flat #tableUI { position: absolute; transform: none; bottom: auto; z-index:
 body.flat #discardHint { bottom: 0; }
 body.flat #discardHint { left: 50%; right: auto; transform: translateX(-50%); bottom: 0; }
 @media (max-width: 599px) { body.flat #tableUI { align-items: center; } body.flat #tableUI #status { font-size: 13px; white-space: normal; } }
+/* Per / Çift: basılı tutup sürüklenir (tıklama yok) */
+.mbtn { cursor: grab; touch-action: none; }
+.mbtn:active { cursor: grabbing; }
+.group-ghost { position: fixed; z-index: 1000; pointer-events: none; transform: rotate(-3deg) scale(1.04); filter: drop-shadow(0 16px 24px rgba(0,0,0,.45)); }
+.group-ghost .card { box-shadow: 0 2px 6px rgba(0,0,0,.3); }
