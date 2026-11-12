@@ -82,7 +82,7 @@ function ensureProfile(pid, name) {
 }
 const goldOf = (pid) => (players[pid] ? players[pid].gold : 0);
 // Profil resmi: kütüphanedeki avatar numarası (public/avatar.js, Avatar.COUNT ile aynı)
-const AVATAR_COUNT = 120;
+const AVATAR_COUNT = 168; // 120 insan + 24 hayvan + 24 kostüm
 const avatarOf = (pid) => (players[pid] && Number.isInteger(players[pid].avatar) ? players[pid].avatar : null);
 const cleanFee = (f) => Math.floor(Number(f) || 0);
 

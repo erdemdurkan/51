@@ -25,7 +25,7 @@
   "created": 1794090016846,
   "lastDaily": "2026-11-12",
   "streak": 2,
-  "avatar": 44
+  "avatar": 23
  },
  "7293b8afd4a72470ea80a0bb4f32f988": {
   "name": "Oyuncu",
@@ -683,6 +683,14 @@
   "name": "Erdem",
   "gold": 0,
   "created": 1794507374543,
+  "streak": 0,
+  "lastDaily": null,
+  "avatar": 131
+ },
+ "47803f23026f14717353b20d345b6cb6": {
+  "name": "Erdem",
+  "gold": 0,
+  "created": 1794507725177,
   "streak": 0,
   "lastDaily": null
  }

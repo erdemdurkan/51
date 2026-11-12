@@ -3,7 +3,9 @@
 // Avatar.byId(n): numaralı kütüphane (COUNT adet, hep aynı görünür).
 // Avatar.svg(seed, {female}): isimden türetilen görünüm (avatar seçmemiş oyuncular / bilgisayar).
 const Avatar = (() => {
-  const COUNT = 120;
+  const HUMANS = 120;
+  const FIG = typeof Figures !== 'undefined' ? Figures : { COUNT: 0 };
+  const COUNT = HUMANS + FIG.COUNT; // insanlar + hayvanlar + kostümler
   const SKIN = [['#f8dcc0', '#dfb08a'], ['#f0c8a0', '#cf9a6e'], ['#e2b184', '#b98252'], ['#cf9a68', '#a26a3e'], ['#b07a4c', '#80522c'], ['#8a5a36', '#5e3a1e']];
   const HAIR = ['#14100c', '#2e1e12', '#4e3219', '#7a4e26', '#a8702f', '#d9b264', '#eadbb0', '#7d7d7d', '#b5401f'];
   const BG = [['#e9eef5', '#b9c6d6'], ['#f3ead9', '#d2bf9c'], ['#e4efe6', '#adc8b4'], ['#efe2e6', '#cfaab5'], ['#e6e3f2', '#b3acd4'], ['#fdf0d8', '#e8c48a'], ['#dff1f4', '#9fcbd4'], ['#ececec', '#bdbdbd']];
@@ -193,9 +195,7 @@ const Avatar = (() => {
       <radialGradient id="${id('bg')}" cx="50%" cy="38%" r="70%"><stop offset="0" stop-color="${bg[0]}"/><stop offset="1" stop-color="${bg[1]}"/></radialGradient>
       <radialGradient id="${id('sk')}" cx="42%" cy="36%" r="70%"><stop offset="0" stop-color="${skin[0]}"/><stop offset="1" stop-color="${skin[1]}"/></radialGradient>
       <radialGradient id="${id('vg')}" r="60%"><stop offset=".72" stop-color="rgba(0,0,0,0)"/><stop offset="1" stop-color="rgba(0,0,0,.28)"/></radialGradient>
-      <clipPath id="${id('cl')}"><circle cx="50" cy="50" r="50"/></clipPath>
-    </defs><g clip-path="url(#${id('cl')})">
-      <rect width="100" height="100" fill="url(#${id('bg')})"/>
+    </defs><g>
       ${scarf ? '' : H.back}
       <rect x="43" y="58" width="14" height="17" rx="3" fill="${skin[1]}"/>
       ${outfit(kind, r, pick, id, skin[1], female)}
@@ -213,13 +213,15 @@ const Avatar = (() => {
       ${scarf ? `<path d="M31 40 Q31 24 50 23 Q69 24 69 40 Q62 30 50 30 Q38 30 31 40Z" fill="${pick(SCARF)}" opacity=".0"/>` : H.front}
       ${!scarf && hw !== 'none' ? headwear(hw, r, pick, hair) : ''}
       <ellipse cx="44" cy="31" rx="9" ry="4" fill="rgba(255,255,255,.12)"/>
-      <circle cx="50" cy="50" r="50" fill="url(#${id('vg')})"/>
     </g></svg>`;
   }
 
   // Kütüphanedeki n. avatar (tek numaralar kadın, çift numaralar erkek)
   const seedOf = (n) => (Math.imul(n + 1, 2654435761) ^ 0x51c0ffee) >>> 0;
-  function byId(n, uid = 'lib') { return draw(seedOf(n), n % 2 === 1, uid + n); }
+  function byId(n, uid = 'lib') { return n >= HUMANS && n < COUNT ? FIG.draw(n - HUMANS) : draw(seedOf(n), n % 2 === 1, uid + n); }
+  // seçim penceresi için gruplar
+  const groups = () => [{ name: 'İnsanlar', from: 0, to: HUMANS }, { name: 'Hayvanlar', from: HUMANS, to: HUMANS + LIST_N('animal') }, { name: 'Kostümler', from: HUMANS + LIST_N('animal'), to: COUNT }];
+  const LIST_N = (k) => { let c = 0; for (let i = 0; i < FIG.COUNT; i++) if (FIG.kindOf(i) === k) c++; return c; };
   function svg(seed, { female = false, uid = 'av' } = {}) { return draw(seed, female, uid); }
-  return { COUNT, byId, svg };
+  return { COUNT, byId, svg, groups };
 })();

@@ -1537,8 +1537,14 @@ let myAvatar = null;
 function openAvatarPicker() {
   const cur = S && S.seats && S.seats[S.mySeat] && Number.isInteger(S.seats[S.mySeat].avatar) ? S.seats[S.mySeat].avatar : myAvatar;
   let tiles = '';
-  for (let i = 0; i < Avatar.COUNT; i++) {
-    tiles += `<button class="avt${i === cur ? ' cur' : ''}" data-i="${i}" title="Avatar ${i + 1}">${Avatar.byId(i, 'pk')}</button>`;
+  // önce hayvanlar ve kostümler, sonra insanlar
+  const gs = Avatar.groups();
+  for (const g of [...gs.slice(1), gs[0]]) {
+    if (g.to <= g.from) continue;
+    tiles += `<div class="avsec" style="grid-column:1/-1">${g.name}</div>`;
+    for (let i = g.from; i < g.to; i++) {
+      tiles += `<button class="avt${i === cur ? ' cur' : ''}" data-i="${i}" title="Avatar ${i + 1}">${Avatar.byId(i, 'pk')}</button>`;
+    }
   }
   modalKind = 'avatar';
   $('modalBody').innerHTML = `<div class="avpick"><h2>Profil resmini seç</h2>
