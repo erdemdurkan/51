@@ -455,6 +455,11 @@ function removeEverywhere(ids) {
 // dir: bırakırken farenin son yönü ('L' sola, 'R' sağa) — kağıt o yandaki komşusuyla gruplanır
 // Sürükleyip ele bıraktığım (yerden/desteden) kağıt: nereye bırakıldı, ekranda nerede duruyordu
 let pendingTake = null;
+function clearPendingGhost() {
+  if (!pendingTake) return;
+  clearTimeout(pendingTake.timer);
+  if (pendingTake.ghost) { pendingTake.ghost.remove(); pendingTake.ghost = null; }
+}
 function insertAt(id, gap) {
   if (gap.row === 1 || gap.row === 2) {
     const arr = rowArr(gap.row).slice();
@@ -800,8 +805,14 @@ function renderHand() {
 // ---------- Oyun eylemleri ----------
 const myTurn = () => S.game && S.game.status === 'playing' && S.game.turn === S.mySeat;
 function doDraw(src, idx) {
-  if (!myTurn() || S.game.phase !== 'draw') return toast(myTurn() ? 'Önce kağıt at' : 'Sıra sende değil');
-  emit('draw', { src }, (res) => {
+  if (!myTurn() || S.game.phase !== 'draw') { clearPendingGhost(); return toast(myTurn() ? 'Önce kağıt at' : 'Sıra sende değil'); }
+  socket.emit('draw', { src }, (res) => {
+    if (!res || !res.ok) {
+      clearPendingGhost();
+      toast((res && res.error) || 'Bağlantı hatası');
+      FX.play('error');
+      return;
+    }
     if (idx != null && res.card && !(pendingTake && pendingTake.used === res.card.id)) moveTo(res.card.id, idx);
   });
 }
@@ -1002,7 +1013,9 @@ function endDrag(e, cancel) {
   $('hand').classList.remove('hover');
   $('discard').classList.remove('hover');
   let dropRect = null;
-  if (d.ghost) { dropRect = d.ghost.getBoundingClientRect(); d.ghost.remove(); }
+  // yerden/desteden ele bırakılan kağıdın görüntüsü, uçuş başlayana kadar bırakıldığı yerde kalır
+  const holdGhost = !cancel && d.moved && (d.kind === 'pile' || d.kind === 'deck') && d.gap != null;
+  if (d.ghost) { dropRect = d.ghost.getBoundingClientRect(); if (!holdGhost) d.ghost.remove(); }
   d.el.classList.remove('dragging');
   if (d.cards) d.cards.forEach((c) => c.classList.remove('dragging'));
   if (cancel) { layoutHand(); return; }
@@ -1019,7 +1032,13 @@ function endDrag(e, cancel) {
     if (overFelt(t)) { lastDrop = { id: d.id, rect: dropRect, t: Date.now() }; discardCard(d.id, false); }
   } else {
     layoutHand();
-    if (d.gap != null) { pendingTake = { gap: d.gap, rect: dropRect, t: Date.now(), used: null }; doDraw(d.kind, d.gap); }
+    if (d.gap != null) {
+      clearPendingGhost();
+      pendingTake = { gap: d.gap, rect: dropRect, t: Date.now(), used: null, ghost: d.ghost, kind: d.kind };
+      // yanıt gelmezse (hata, gecikme) görüntü takılı kalmasın
+      pendingTake.timer = setTimeout(clearPendingGhost, 2500);
+      doDraw(d.kind, d.gap);
+    }
   }
 }
 document.addEventListener('pointerup', (e) => endDrag(e, false));
@@ -1905,11 +1924,12 @@ function flyToSeat(seat, fromRect, card, startFace, backColor) {
     }
     if (el) el.style.visibility = 'hidden';
     const dropped = pendingTake && pendingTake.used === card.id && pendingTake.rect;
-    if (dropped) { fromRect = pendingTake.rect; startFace = 'front'; }
+    if (dropped) { fromRect = pendingTake.rect; startFace = pendingTake.kind === 'deck' ? 'back' : 'front'; }
+    clearPendingGhost(); // görüntü kalkar, aynı karede uçan kağıt onun yerinden başlar
     pendingTake = null;
     FX.fly({
       from: fromRect, to, front: cardEl(card), back: backEl(card.b), startFace, endFace: 'front',
-      duration: dropped ? 240 : 600, arc: dropped ? 0 : 110, sound: dropped ? null : 'slide',
+      duration: dropped ? 320 : 600, arc: dropped ? 0 : 110, sound: dropped ? null : 'slide',
       onLand: () => { if (el) el.style.visibility = ''; FX.play(startFace === 'back' ? 'flip' : 'place'); },
     });
   } else {
