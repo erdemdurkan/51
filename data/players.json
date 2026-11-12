@@ -21,7 +21,7 @@
  },
  "bf264ccc3d7b14382b44e25883dbe6a6": {
   "name": "Erdem",
-  "gold": 3200,
+  "gold": 3120,
   "created": 1794090016846,
   "lastDaily": "2026-11-12",
   "streak": 2,
@@ -30,6 +30,10 @@
    "mouth": {
     "id": "sigara",
     "until": 1794595125460
+   },
+   "gag": {
+    "id": "palyaco",
+    "until": 1794596978384
    }
   }
  },
@@ -791,6 +795,14 @@
   "name": "Erdem",
   "gold": 0,
   "created": 1794510496054,
+  "streak": 0,
+  "lastDaily": null,
+  "acc": {}
+ },
+ "99746cd9c8fa1879bc690d47b264f683": {
+  "name": "Erdem",
+  "gold": 0,
+  "created": 1794510561117,
   "streak": 0,
   "lastDaily": null,
   "acc": {}

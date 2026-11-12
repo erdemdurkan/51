@@ -1709,3 +1709,10 @@ body.flat #discardHint, body.flat #tableUI #status { display: none !important; }
   #showFx .fx-card .card { --cw: 120px; }
   #showFx .fx-sub { font-size: 15px; }
 }
+/* Oyunun hiçbir yerinde kaydırma çubuğu görünmez (kaydırma tekerlek/parmakla çalışır) */
+html, body, * { scrollbar-width: none; -ms-overflow-style: none; }
+*::-webkit-scrollbar { display: none; width: 0; height: 0; }
+/* dükkân: yatay taşma yok, tek kaydırma (pencerenin kendisi) */
+.modal-card { overflow-x: hidden; }
+.shgrid { max-height: none; overflow: visible; }
+.shi:hover:not(:disabled) { transform: translateY(-2px); }
