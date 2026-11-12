@@ -1,156 +1,42 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="tr">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<meta name="theme-color" content="#1a0f07">
+<meta name="theme-color" content="#0b0603">
 <title>İskambil 51</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🃏</text></svg>">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
+<style>
+  /* Oyun sabit 1920x1080 çerçevede çalışır; ekrana orantılı sığdırılır.
+     Ultra geniş ekranda yanlar, dar ekranda alt-üst boş kalır (görüntü hep 1080p ile aynı). */
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0603; }
+  #stage { position: absolute; left: 50%; top: 50%; width: 1920px; height: 1080px; border: 0; display: block;
+    transform-origin: 50% 50%; background: #120a05; box-shadow: 0 0 60px rgba(0,0,0,.8); }
+  /* telefon/küçük ekran: ölçekleme yok, oyun ekranı doldurur */
+  #stage.fill { left: 0; top: 0; width: 100vw; height: 100vh; height: 100dvh; transform: none !important; box-shadow: none; }
+</style>
 </head>
 <body>
-
-<section id="home" class="screen hidden">
-  <div class="hero">
-    <div class="crown">👑</div>
-    <div class="hero-row"><span class="suit blk">♠</span><span class="suit rd">♥</span><h1 class="logo">51</h1><span class="suit rd">♦</span><span class="suit blk">♣</span></div>
-    <div class="hero-sub">İSKAMBİL</div>
-  </div>
-  <p class="sub">2 deste · 2 sahte okey · 106 kağıt · 4 kişi</p>
-  <div class="gold-line">Altının: <b id="myGold">…</b> <span class="coin">🪙</span> <button id="btnDaily" class="small gift">🎁 Günlük hediye</button></div>
-  <button class="rules-btn rules-home">📜 Oyun kuralları</button>
-  <input id="name" placeholder="Adın" maxlength="16" autocomplete="off">
-  <div class="box">
-    <h3>Oda kur</h3>
-    <div class="row">
-      <label>Oyun
-        <select id="mode"><option value="solo">Tekli (4 kişi)</option><option value="team">Eşli (2'ye 2)</option></select>
-      </label>
-      <label>El sayısı <select id="hands"></select></label>
-    </div>
-    <button id="btnBots" class="primary">Bilgisayara karşı oyna <small>(ücretsiz)</small></button>
-    <div class="fee-row">
-      <label>Masa ücreti (altın) <input id="fee" type="number" min="250" step="50" value="250" inputmode="numeric"></label>
-      <button id="btnCreate">Online masa aç</button>
-    </div>
-    <p class="muted small-note">Online masada herkes ücreti yatırır. 1. yerdeki paranın yarısını alır, 2. ve finali kazanan yatırdığını geri alır. En az 250 altın.</p>
-  </div>
-  <div class="box">
-    <h3>Odaya katıl</h3>
-    <div class="row">
-      <input id="joinCode" placeholder="Oda kodu" maxlength="5" autocomplete="off">
-      <button id="btnJoin" class="primary">Katıl</button>
-    </div>
-  </div>
-</section>
-
-<section id="lobby" class="screen hidden">
-  <button class="back-btn" id="btnBackTop">← Ana sayfa</button>
-  <h2>Oda <span id="lobbyCode" class="code"></span></h2>
-  <div class="share">
-    <input id="shareLink" readonly>
-    <button id="btnCopy">Linki kopyala</button>
-  </div>
-  <div id="seatList"></div>
-  <div class="box">
-    <div class="row">
-      <label>Oyun
-        <select id="lMode"><option value="solo">Tekli (4 kişi)</option><option value="team">Eşli (2'ye 2)</option></select>
-      </label>
-      <label>El sayısı <select id="lHands"></select></label>
-      <label>Masa ücreti <input id="lFee" type="number" min="250" step="50" inputmode="numeric"></label>
-    </div>
-    <p id="lobbyMoney" class="money-line"></p>
-    <p id="lobbyHint" class="muted"></p>
-  </div>
-  <button id="btnStart" class="primary big">Oyunu başlat</button>
-  <button class="rules-btn ghost">📜 Oyun kuralları</button>
-  <button id="btnLeave" class="ghost">Odadan çık</button>
-</section>
-
-<section id="game" class="screen hidden">
-  <header id="topbar">
-    <button id="btnExit" class="small" title="Ana sayfaya dön">← Çık</button>
-    <span id="gInfo"></span>
-    <span class="grow"></span>
-    <span class="zoom" title="Kamera yakınlaştırma (masanın üstünde fare tekerleği de çalışır)"><button id="zOut" class="small" aria-label="Uzaklaş">−</button><button id="zReset" class="small" aria-label="Sıfırla">100%</button><button id="zIn" class="small" aria-label="Yakınlaş">+</button></span>
-    <button id="btnResult" class="small hidden">Sonuç</button>
-    <button class="small rules-btn" title="Oyun kuralları">📜<span class="rl-t"> Kurallar</span></button>
-    <button id="btnScore" class="small">Puanlar</button>
-  </header>
-  <div id="table">
-    <div id="tableBox">
-      <div class="pl" id="pl-top"></div>
-      <div class="pl side" id="pl-left"></div>
-      <div class="pl side" id="pl-right"></div>
-      <div id="tableTop">
-        <div class="t-leg t-leg-l"></div>
-        <div class="t-leg t-leg-r"></div>
-        <div class="t-front"></div>
-        <i class="mk mk-t"></i><i class="mk mk-l"></i><i class="mk mk-r"></i>
-        <div id="felt">
-          <div id="log"></div>
-          <div id="discard">
-            <div id="spread"></div>
-          </div>
-          <div id="discardHint"></div>
-          <div id="feltBottom">
-            <div id="deck"></div>
-            <div id="indicator"></div>
-          </div>
-        </div>
-      </div>
-      <div class="opp" id="opp-top"></div>
-      <div class="opp side" id="opp-left"></div>
-      <div class="opp side" id="opp-right"></div>
-    </div>
-  </div>
-  <div id="bar">
-    <div id="status"></div>
-    <div id="actions">
-      <button id="btnShow" class="small show-btn hidden">🃏 Gösterge göster</button>
-      <button id="btnSeries" class="small">Seri diz</button>
-      <button id="btnPairs" class="small">Çift diz</button>
-      <button id="btnUndo" class="small hidden">↩ Geri bırak</button>
-      <button id="btnDiscard" class="small">At</button>
-      <button id="btnFinish" class="small finish">Bitir</button>
-    </div>
-  </div>
-  <div id="hand"></div>
-  <div id="notebook" title="Puan defteri">
-    <div class="nb-paper"><svg class="nb-lines"></svg><div class="nb-text"></div></div>
-    <svg class="pen" viewBox="0 0 220 30" aria-hidden="true">
-      <defs>
-        <linearGradient id="penBody" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a5088"/><stop offset=".45" stop-color="#1d2142"/><stop offset="1" stop-color="#0a0b18"/></linearGradient>
-        <linearGradient id="penGold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff0b0"/><stop offset=".5" stop-color="#d9a52b"/><stop offset="1" stop-color="#8a5e0e"/></linearGradient>
-      </defs>
-      <path d="M30 6 L168 6 Q176 6 180 9 L182 21 Q177 24 168 24 L30 24 Q20 24 20 15 Q20 6 30 6 Z" fill="url(#penBody)"/>
-      <rect x="44" y="3.2" width="74" height="4" rx="2" fill="url(#penGold)"/>
-      <rect x="40" y="5.5" width="5" height="19" fill="url(#penGold)"/>
-      <rect x="150" y="6" width="5" height="18" fill="url(#penGold)"/>
-      <path d="M32 10 L166 10" stroke="#ffffff40" stroke-width="2" stroke-linecap="round"/>
-      <path d="M182 9 L196 11.5 L196 18.5 L182 21 Z" fill="#111"/>
-      <path d="M196 11 L219 15 L196 19 Z" fill="url(#penGold)"/>
-      <path d="M201 15 L217 15" stroke="#5a4210" stroke-width=".8"/>
-      <circle cx="201" cy="15" r="1.1" fill="#5a4210"/>
-    </svg>
-  </div>
-</section>
-
-<div id="showFx" class="hidden"><div class="fx-box"><div class="fx-title"></div><div class="fx-card"></div><div class="fx-sub"></div></div></div>
-<div id="modal" class="hidden"><div class="modal-card" id="modalBody"></div></div>
-<div id="toast"></div>
-<button id="btnMute" class="mute-fab" aria-label="Ses">🔊</button>
-
-<script src="/socket.io/socket.io.js"></script>
-<script src="vendor/three.min.js"></script>
-<script src="fx.js"></script>
-<script src="portrait.js"></script>
-<script src="stage3d.js"></script>
-<script src="rules.js"></script>
-<script src="app.js"></script>
+<iframe id="stage" title="İskambil 51" allow="autoplay; fullscreen; clipboard-write"></iframe>
+<script>
+  const W = 1920;
+  const H = 1080;
+  const f = document.getElementById('stage');
+  f.src = 'game.html' + location.search + location.hash;
+  function fit() {
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const small = Math.min(vw, vh) < 600; // telefon: kendi duyarlı yerleşimini kullansın
+    f.classList.toggle('fill', small);
+    if (small) return;
+    const s = Math.min(vw / W, vh / H);
+    f.style.transform = `translate(-50%, -50%) scale(${s})`;
+  }
+  window.addEventListener('resize', fit);
+  fit();
+  // tıklayınca klavye/ses odağı oyuna geçsin
+  window.addEventListener('pointerdown', () => f.contentWindow && f.contentWindow.focus());
+  f.addEventListener('load', () => f.contentWindow.focus());
+</script>
 </body>
 </html>

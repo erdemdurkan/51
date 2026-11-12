@@ -1,0 +1,552 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Salon Önizleme</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #0e0805; overflow: hidden; font-family: Georgia, 'Times New Roman', serif; }
+  canvas { display: block; }
+  .vig { position: fixed; inset: 0; pointer-events: none;
+    background: radial-gradient(ellipse at 50% 45%, rgba(0,0,0,0) 45%, rgba(10,4,0,.55) 80%, rgba(5,2,0,.85) 100%); }
+  .grain { position: fixed; inset: 0; pointer-events: none; opacity: .07; mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence baseFrequency='.9' numOctaves='2'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"); }
+  .tag { position: fixed; transform: translate(-50%, -100%); padding: 3px 12px 4px; border-radius: 4px;
+    background: linear-gradient(#e9cf8f, #b98d45); color: #2a1606; font-weight: bold; font-size: 15px;
+    box-shadow: 0 2px 6px rgba(0,0,0,.6); border: 1px solid #6b4a1c; white-space: nowrap; pointer-events: none; }
+  .tag small { display: block; font-weight: normal; font-size: 11px; text-align: center; opacity: .8; }
+  .tag.turn { box-shadow: 0 0 14px 3px rgba(255,190,90,.8); }
+  .top { position: fixed; top: 12px; left: 16px; right: 16px; display: flex; justify-content: space-between; color: #e8d2a6; font-size: 14px; text-shadow: 0 1px 3px #000; pointer-events: none; }
+  .badge { background: rgba(30,16,6,.75); border: 1px solid #7a5426; padding: 6px 12px; border-radius: 6px; }
+  .hand { position: fixed; bottom: -26px; left: 50%; transform: translateX(-50%); display: flex; pointer-events: none; }
+  .card { width: 78px; height: 112px; margin-left: -18px; border-radius: 7px; background: #fbf6ea; border: 1px solid #b9ab8e;
+    box-shadow: -3px 2px 8px rgba(0,0,0,.55); font: bold 22px Georgia, serif; padding: 5px 7px; box-sizing: border-box; }
+  .card.r { color: #b3261e; } .card.b { color: #1d1d1d; }
+  @media (max-width: 700px) { .card { width: 48px; height: 70px; font-size: 14px; margin-left: -16px; } .tag { font-size: 12px; } }
+</style>
+</head>
+<body>
+<div class="vig"></div><div class="grain"></div>
+<div class="top"><span class="badge">Önizleme · Salon ambiyansı (asıl oyun değişmedi)</span><span class="badge">Fareyi sürükle: bakış açısı</span></div>
+<div class="hand" id="hand"></div>
+<script src="vendor/three.min.js"></script>
+<script>
+(() => {
+const T = THREE;
+const V = (x, y, z) => new T.Vector3(x, y, z);
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// ---------- renderer / sahne ----------
+const renderer = new T.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.outputEncoding = T.sRGBEncoding;
+renderer.toneMapping = T.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 0.9;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = T.PCFSoftShadowMap;
+document.body.prepend(renderer.domElement);
+const scene = new T.Scene();
+scene.background = new T.Color(0x140b06);
+scene.fog = new T.FogExp2(0x1e120a, 0.12);
+const camera = new T.PerspectiveCamera(40, 1, 0.05, 60);
+let camBase = V(0, 1.95, 2.95), camTarget = V(0, 0.95, -0.45);
+if (location.search.includes('yakin')) { camBase = V(0.25, 1.4, 0.2); camTarget = V(0, 1.3, -1.4); }
+if (location.search.includes('sol')) { camBase = V(-0.3, 1.4, 0.6); camTarget = V(-1.4, 1.3, 0); }
+
+// ---------- dokular ----------
+function canvasTex(w, h, draw, rx = 1, ry = 1) {
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  draw(c.getContext('2d'), w, h);
+  const t = new T.CanvasTexture(c); t.encoding = T.sRGBEncoding;
+  t.wrapS = t.wrapT = T.RepeatWrapping; t.repeat.set(rx, ry); t.anisotropy = 8;
+  return t;
+}
+function rnd(a) { let s = a; return () => (s = (s * 16807) % 2147483647) / 2147483647; }
+function planks(base, vertical, rx, ry, seed = 7) {
+  return canvasTex(512, 512, (g, w, h) => {
+    const r = rnd(seed); const n = 8; const ph = h / n;
+    for (let i = 0; i < n; i++) {
+      const k = 0.75 + r() * 0.4; const c = new T.Color(base).multiplyScalar(k);
+      g.fillStyle = '#' + c.getHexString(); g.fillRect(0, i * ph, w, ph);
+      for (let j = 0; j < 40; j++) {
+        g.strokeStyle = `rgba(0,0,0,${0.05 + r() * 0.12})`; g.lineWidth = 0.5 + r() * 1.5;
+        const y = i * ph + r() * ph; g.beginPath(); g.moveTo(0, y);
+        for (let x = 0; x <= w; x += 32) g.lineTo(x, y + Math.sin(x * 0.02 + j) * 2 * r());
+        g.stroke();
+      }
+      g.fillStyle = 'rgba(0,0,0,.55)'; g.fillRect(0, i * ph, w, 3);
+      const cut = r() * w; g.fillRect(cut, i * ph, 3, ph);
+      if (r() < 0.5) { g.fillStyle = 'rgba(30,15,5,.5)'; g.beginPath(); g.ellipse(r() * w, i * ph + ph / 2, 8, 4, 0, 0, 7); g.fill(); }
+    }
+  }, rx, ry);
+}
+const softTex = canvasTex(128, 128, (g, w) => {
+  const gr = g.createRadialGradient(w / 2, w / 2, 0, w / 2, w / 2, w / 2);
+  gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.4, 'rgba(255,255,255,.35)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = gr; g.fillRect(0, 0, w, w);
+});
+const smokeTex = canvasTex(256, 256, (g, w) => {
+  const r = rnd(3);
+  for (let i = 0; i < 26; i++) {
+    const x = w / 2 + (r() - 0.5) * w * 0.45, y = w / 2 + (r() - 0.5) * w * 0.45, rad = w * (0.12 + r() * 0.2);
+    const gr = g.createRadialGradient(x, y, 0, x, y, rad);
+    gr.addColorStop(0, 'rgba(255,255,255,.22)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = gr; g.fillRect(0, 0, w, w);
+  }
+});
+const backTex = canvasTex(170, 240, (g, w, h) => {
+  g.fillStyle = '#f4efe2'; g.fillRect(0, 0, w, h);
+  g.fillStyle = '#9e1f1f'; g.fillRect(10, 10, w - 20, h - 20);
+  g.strokeStyle = 'rgba(255,230,200,.5)'; g.lineWidth = 2;
+  for (let i = -h; i < w + h; i += 14) { g.beginPath(); g.moveTo(i, 10); g.lineTo(i + h, h); g.stroke(); g.beginPath(); g.moveTo(i, h - 10); g.lineTo(i + h, 0); g.stroke(); }
+  g.strokeStyle = '#f4efe2'; g.lineWidth = 3; g.strokeRect(18, 18, w - 36, h - 36);
+});
+function faceTex(rank, suit, red) {
+  return canvasTex(170, 240, (g, w, h) => {
+    g.fillStyle = '#faf5e8'; g.fillRect(0, 0, w, h);
+    g.fillStyle = red ? '#b3261e' : '#1d1d1d'; g.font = 'bold 44px Georgia'; g.fillText(rank, 12, 50);
+    g.font = '40px Georgia'; g.fillText(suit, 14, 92); g.font = '96px Georgia'; g.fillText(suit, 50, 185);
+  });
+}
+
+// ---------- malzeme yardımcıları ----------
+const std = (color, rough = 0.8, extra = {}) => new T.MeshStandardMaterial({ color, roughness: rough, metalness: 0, ...extra });
+const shadowAll = (o) => o.traverse((m) => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } });
+function limbMesh(r, mat) {
+  const m = new T.Mesh(new T.CylinderGeometry(r, r * 0.92, 1, 14), mat);
+  m.userData.set = (a, b) => {
+    const len = a.distanceTo(b); m.position.copy(a).add(b).multiplyScalar(0.5);
+    m.scale.set(1, len, 1); m.quaternion.setFromUnitVectors(V(0, 1, 0), b.clone().sub(a).normalize());
+  };
+  return m;
+}
+function ball(r, mat, p) { const m = new T.Mesh(new T.SphereGeometry(r, 18, 14), mat); if (p) m.position.copy(p); return m; }
+
+// ---------- oda ----------
+const floorM = std(0xffffff, 0.75, { map: planks('#6b4426', false, 6, 6, 11) });
+const floor = new T.Mesh(new T.PlaneGeometry(10, 10), floorM);
+floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
+const wallM = std(0xffffff, 0.85, { map: planks('#4a2c18', true, 3, 2, 5) });
+wallM.map.rotation = Math.PI / 2;
+function wall(w, h, x, z, ry) { const m = new T.Mesh(new T.PlaneGeometry(w, h), wallM); m.position.set(x, h / 2, z); m.rotation.y = ry; m.receiveShadow = true; scene.add(m); return m; }
+wall(9, 3.4, 0, -4.2, 0); wall(9, 3.4, -4, 0, Math.PI / 2); wall(9, 3.4, 4, 0, -Math.PI / 2);
+const ceil = new T.Mesh(new T.PlaneGeometry(9, 9), std(0x2a180c, 0.9)); ceil.position.y = 3.4; ceil.rotation.x = Math.PI / 2; scene.add(ceil);
+const beamM = std(0x2e1a0c, 0.8);
+for (let i = -3; i <= 3; i++) { const b = new T.Mesh(new T.BoxGeometry(9, 0.18, 0.2), beamM); b.position.set(0, 3.3, i * 1.3); scene.add(b); }
+// lambri
+const wainM = std(0x3a2010, 0.7);
+[[0, -4.18, 0, 9], [-3.98, 0, Math.PI / 2, 9], [3.98, 0, -Math.PI / 2, 9]].forEach(([x, z, ry, w]) => {
+  const m = new T.Mesh(new T.BoxGeometry(w, 0.06, 0.06), wainM); m.position.set(x, 1.0, z); m.rotation.y = ry; scene.add(m);
+});
+// direkler
+[[-2.3, -1.9], [2.5, -1.7]].forEach(([x, z]) => {
+  const p = new T.Mesh(new T.BoxGeometry(0.24, 3.4, 0.24), std(0x3b2312, 0.7)); p.position.set(x, 1.7, z); shadowAll(p); scene.add(p);
+});
+// çerçeveler
+[[-2.9, 1.9, 0x3a3020], [3.0, 1.95, 0x2a3328]].forEach(([x, y, c]) => {
+  const f = new T.Mesh(new T.BoxGeometry(0.7, 0.55, 0.04), std(0x1c1008, 0.5)); f.position.set(x, y, -4.17); scene.add(f);
+  const pc = new T.Mesh(new T.PlaneGeometry(0.58, 0.43), std(c, 0.9)); pc.position.set(x, y, -4.14); scene.add(pc);
+});
+
+// pencere + ışık hüzmesi
+const winC = new T.Mesh(new T.PlaneGeometry(1.0, 1.5), new T.MeshBasicMaterial({ color: 0xd8e2ff }));
+winC.position.set(-3.97, 1.85, -1.4); winC.rotation.y = Math.PI / 2; scene.add(winC);
+const frameM = std(0x24150a, 0.6);
+[[0, 0.75, 1.1, 0.06], [0, -0.75, 1.1, 0.06], [0, 0, 0.05, 1.55], [0.52, 0, 0.06, 1.55], [-0.52, 0, 0.06, 1.55], [0, 0.25, 1.05, 0.04]].forEach(([dz, dy, w, h]) => {
+  const b = new T.Mesh(new T.BoxGeometry(0.06, h, w), frameM); b.position.set(-3.95, 1.85 + dy, -1.4 + dz); scene.add(b);
+});
+const shaftTex = canvasTex(64, 256, (g, w, h) => {
+  const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(0.6, 'rgba(255,255,255,.5)'); gr.addColorStop(1, 'rgba(255,255,255,1)');
+  g.fillStyle = gr; g.fillRect(0, 0, w, h);
+  const gx = g.createLinearGradient(0, 0, w, 0); gx.addColorStop(0, 'rgba(0,0,0,1)'); gx.addColorStop(0.5, 'rgba(0,0,0,0)'); gx.addColorStop(1, 'rgba(0,0,0,1)');
+  g.globalCompositeOperation = 'destination-out'; g.fillStyle = gx; g.fillRect(0, 0, w, h);
+});
+const shaftM = new T.MeshBasicMaterial({ color: 0xbfcfff, map: shaftTex, transparent: true, opacity: 0.16, blending: T.AdditiveBlending, depthWrite: false, side: T.DoubleSide, fog: false });
+const winP = V(-3.9, 1.85, -1.4), floorP = V(-1.2, 0, -0.6);
+for (let i = 0; i < 3; i++) {
+  const len = winP.distanceTo(floorP);
+  const sh = new T.Mesh(new T.CylinderGeometry(0.75 + i * 0.12, 0.55, len, 4, 1, true), shaftM);
+  sh.position.copy(winP).add(floorP).multiplyScalar(0.5);
+  sh.quaternion.setFromUnitVectors(V(0, 1, 0), floorP.clone().sub(winP).normalize());
+  sh.rotateY(Math.PI / 4 + i * 0.3); scene.add(sh);
+}
+const sun = new T.DirectionalLight(0xbfd0ff, 0.55); sun.position.set(-6, 3.2, -2); sun.target.position.copy(floorP); scene.add(sun, sun.target);
+
+// bar
+const bar = new T.Group(); scene.add(bar);
+const counter = new T.Mesh(new T.BoxGeometry(5, 1.1, 0.6), std(0xffffff, 0.6, { map: planks('#4f2f17', true, 2, 1, 21) }));
+counter.position.set(0.6, 0.55, -3.3); bar.add(counter);
+const ctop = new T.Mesh(new T.BoxGeometry(5.1, 0.06, 0.72), std(0x5e3a1c, 0.35)); ctop.position.set(0.6, 1.12, -3.3); bar.add(ctop);
+const mirror = new T.Mesh(new T.PlaneGeometry(3.2, 1.4), std(0x2a2620, 0.15, { metalness: 0.8 })); mirror.position.set(0.6, 2.0, -4.15); bar.add(mirror);
+const bottleCols = [0x8a4a12, 0x3c5a20, 0x6a2a10, 0xa86a1a, 0x2c3a2a, 0x7a5a2a];
+const br = rnd(99);
+[1.45, 1.95, 2.45].forEach((y) => {
+  const sh = new T.Mesh(new T.BoxGeometry(3.6, 0.04, 0.24), std(0x3a2210, 0.6)); sh.position.set(0.6, y, -4.05); bar.add(sh);
+  for (let x = -1.1; x < 2.3; x += 0.13 + br() * 0.08) {
+    const c = bottleCols[Math.floor(br() * bottleCols.length)];
+    const m = std(c, 0.12, { transparent: true, opacity: 0.88, emissive: c, emissiveIntensity: 0.25 });
+    const h = 0.22 + br() * 0.14;
+    const b = new T.Mesh(new T.CylinderGeometry(0.035, 0.038, h, 12), m); b.position.set(x, y + 0.02 + h / 2, -4.03); bar.add(b);
+    const n = new T.Mesh(new T.CylinderGeometry(0.012, 0.03, 0.09, 10), m); n.position.set(x, y + 0.02 + h + 0.045, -4.03); bar.add(n);
+  }
+});
+
+// ---------- lambalar ----------
+const lamps = [];
+function lamp(p, intensity, dist, shadow) {
+  const L = new T.PointLight(0xff9c52, intensity, dist, 2);
+  L.position.copy(p);
+  if (shadow) { L.castShadow = true; L.shadow.mapSize.set(1024, 1024); L.shadow.bias = -0.002; L.shadow.radius = 4; }
+  scene.add(L);
+  const glow = new T.Sprite(new T.SpriteMaterial({ map: softTex, color: 0xffb060, transparent: true, blending: T.AdditiveBlending, depthWrite: false, fog: false }));
+  glow.scale.setScalar(0.55); glow.position.copy(p); scene.add(glow);
+  const flame = ball(0.03, new T.MeshBasicMaterial({ color: 0xffe0a0 }), p); scene.add(flame);
+  const glass = new T.Mesh(new T.SphereGeometry(0.085, 16, 12), new T.MeshStandardMaterial({ color: 0xffd8a0, roughness: 0.1, transparent: true, opacity: 0.35, emissive: 0xff9a40, emissiveIntensity: 0.6 }));
+  glass.scale.y = 1.4; glass.position.copy(p); scene.add(glass);
+  lamps.push({ L, glow, base: intensity, ph: Math.random() * 10 });
+  return L;
+}
+// masa üstü asma lamba
+const hang = V(0, 2.25, -0.1);
+const cord = new T.Mesh(new T.CylinderGeometry(0.008, 0.008, 1.1, 6), std(0x111111)); cord.position.set(0, 2.85, -0.1); scene.add(cord);
+const shade = new T.Mesh(new T.ConeGeometry(0.32, 0.18, 32, 1, true), std(0x2a3a2a, 0.5, { metalness: 0.4, side: T.DoubleSide })); shade.position.set(0, 2.38, -0.1); scene.add(shade);
+lamp(hang, 1.9, 6, true);
+[V(-3.85, 2.1, -3.0), V(3.85, 2.1, -2.6), V(-2.3, 2.15, -1.73), V(2.5, 2.15, -1.53), V(-1.0, 2.4, -3.9), V(2.2, 2.4, -3.9), V(3.85, 2.1, 1.2)].forEach((p) => lamp(p, 0.8, 3.8, false));
+scene.add(new T.HemisphereLight(0x5a3a24, 0x0a0502, 0.22));
+
+// ---------- masa ----------
+const table = new T.Group(); scene.add(table);
+const top = new T.Mesh(new T.CylinderGeometry(1.08, 1.08, 0.07, 64), std(0xffffff, 0.55, { map: planks('#7a4e2a', false, 2, 2, 33) }));
+top.position.y = 0.74; table.add(top);
+const edge = new T.Mesh(new T.TorusGeometry(1.08, 0.03, 10, 64), std(0x4a2a12, 0.5)); edge.rotation.x = Math.PI / 2; edge.position.y = 0.74; table.add(edge);
+const ped = new T.Mesh(new T.CylinderGeometry(0.1, 0.14, 0.7, 16), std(0x3a2210, 0.6)); ped.position.y = 0.36; table.add(ped);
+const foot = new T.Mesh(new T.CylinderGeometry(0.5, 0.55, 0.06, 24), std(0x3a2210, 0.6)); foot.position.y = 0.03; table.add(foot);
+shadowAll(table);
+const TY = 0.775;
+// deste, atılan kart, paralar, bardaklar
+const cardBox = new T.BoxGeometry(0.17, 0.004, 0.24);
+const white = std(0xf6f2e6, 0.7);
+const backM = std(0xffffff, 0.6, { map: backTex });
+const deck = new T.Mesh(new T.BoxGeometry(0.17, 0.07, 0.24), [white, white, backM, white, white, white]); deck.position.set(-0.12, TY + 0.035, -0.05); deck.rotation.y = 0.08; deck.castShadow = true; table.add(deck);
+const discard = new T.Group(); discard.position.set(0.22, TY, -0.02); table.add(discard);
+function faceCard(rank, suit, red) { return new T.Mesh(cardBox, [white, white, std(0xffffff, 0.6, { map: faceTex(rank, suit, red) }), backM, white, white]); }
+const d0 = faceCard('7', '♥', true); d0.rotation.y = -0.2; d0.position.y = 0.003; discard.add(d0);
+const gold = std(0xd8a84a, 0.3, { metalness: 0.9 }), silver = std(0xc8c8c8, 0.3, { metalness: 0.9 });
+const coinGeo = new T.CylinderGeometry(0.028, 0.028, 0.007, 20);
+[[0.5, 0.45, 6, gold], [0.58, 0.38, 3, silver], [-0.55, 0.35, 5, silver], [-0.48, 0.45, 2, gold], [0.1, -0.62, 7, gold], [-0.05, -0.6, 4, silver], [0.62, -0.1, 4, gold], [-0.6, -0.15, 5, gold]].forEach(([x, z, n, m]) => {
+  for (let i = 0; i < n; i++) { const c = new T.Mesh(coinGeo, m); c.position.set(x + (Math.random() - 0.5) * 0.006, TY + 0.004 + i * 0.007, z + (Math.random() - 0.5) * 0.006); c.castShadow = true; table.add(c); }
+});
+const scattered = [[0.35, 0.55], [-0.35, 0.6], [0.7, 0.2]];
+scattered.forEach(([x, z]) => { const c = new T.Mesh(coinGeo, Math.random() < 0.5 ? gold : silver); c.position.set(x, TY + 0.004, z); table.add(c); });
+function glass(x, z) {
+  const g = new T.Group();
+  const gl = new T.Mesh(new T.CylinderGeometry(0.038, 0.032, 0.1, 20, 1, true), new T.MeshStandardMaterial({ color: 0xffffff, roughness: 0.05, transparent: true, opacity: 0.25, side: T.DoubleSide }));
+  gl.position.y = 0.05;
+  const bottom = new T.Mesh(new T.CylinderGeometry(0.032, 0.032, 0.012, 20), new T.MeshStandardMaterial({ color: 0xffffff, roughness: 0.05, transparent: true, opacity: 0.4 })); bottom.position.y = 0.006;
+  const liq = new T.Mesh(new T.CylinderGeometry(0.034, 0.032, 0.045, 20), new T.MeshStandardMaterial({ color: 0xb8661a, roughness: 0.1, transparent: true, opacity: 0.85, emissive: 0x5a2a05, emissiveIntensity: 0.4 }));
+  liq.position.y = 0.034;
+  g.add(gl, bottom, liq); g.position.set(x, TY, z); table.add(g); return g;
+}
+glass(-0.55, -0.6); glass(0.62, -0.55); glass(0.72, 0.5); glass(-0.4, 0.75);
+// kül tablası
+const ash = new T.Mesh(new T.CylinderGeometry(0.07, 0.06, 0.03, 20), std(0x3a3a3a, 0.4, { metalness: 0.5 })); ash.position.set(0.3, TY + 0.015, -0.6); table.add(ash);
+
+// ---------- karakter ----------
+function build(o) {
+  const skin = std(o.skin, 0.62), skinD = std(new T.Color(o.skin).multiplyScalar(0.82), 0.7);
+  const shirt = std(o.shirt, 0.85), vest = std(o.vest, 0.75, { side: T.DoubleSide }), pants = std(o.pants, 0.9);
+  const hairM = std(o.hair, 0.95), hatM = std(o.hatC, 0.9), dark = std(0x1a0f08, 0.5);
+  const F = o.female;
+  const root = new T.Group();
+  // sandalye
+  const wood = std(0x3e2412, 0.6);
+  const seat = new T.Mesh(new T.BoxGeometry(0.46, 0.05, 0.44), wood); seat.position.y = 0.45; root.add(seat);
+  [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([x, z]) => { const l = new T.Mesh(new T.CylinderGeometry(0.022, 0.018, 0.45, 8), wood); l.position.set(x * 0.2, 0.225, z * 0.19); root.add(l); });
+  [-1, 1].forEach((x) => { const p = new T.Mesh(new T.CylinderGeometry(0.022, 0.022, 0.55, 8), wood); p.position.set(x * 0.2, 0.75, -0.21); root.add(p); });
+  [0.7, 0.85, 0.98].forEach((y) => { const s = new T.Mesh(new T.BoxGeometry(0.42, 0.05, 0.025), wood); s.position.set(0, y, -0.21); root.add(s); });
+  // bacaklar ve çizmeler
+  [-1, 1].forEach((s) => {
+    const th = limbMesh(0.075, pants); th.userData.set(V(s * 0.1, 0.53, -0.02), V(s * 0.11, 0.53, 0.38)); root.add(th);
+    const sn = limbMesh(0.058, F ? dark : pants); sn.userData.set(V(s * 0.11, 0.52, 0.4), V(s * 0.12, 0.1, 0.44)); root.add(sn);
+    root.add(ball(0.06, F ? dark : pants, V(s * 0.11, 0.52, 0.39)));
+    const boot = new T.Mesh(new T.CylinderGeometry(0.062, 0.066, 0.22, 14), std(0x2a170b, 0.45)); boot.position.set(s * 0.12, 0.13, 0.44); root.add(boot);
+    const toe = ball(0.065, std(0x2a170b, 0.45), V(s * 0.12, 0.035, 0.5)); toe.scale.set(0.9, 0.5, 1.6); root.add(toe);
+  });
+  if (F) {
+    const skirt = new T.Mesh(new T.CylinderGeometry(0.2, 0.34, 0.5, 32, 1, true), std(o.vest, 0.8, { side: T.DoubleSide }));
+    skirt.position.set(0, 0.36, 0.12); skirt.scale.z = 1.25; root.add(skirt);
+    const lap = new T.Mesh(new T.BoxGeometry(0.36, 0.06, 0.42), std(o.vest, 0.8)); lap.position.set(0, 0.57, 0.17); root.add(lap);
+  }
+  // gövde
+  const torso = new T.Group(); torso.position.y = 0.52; root.add(torso);
+  const chest = new T.Mesh(new T.CylinderGeometry(F ? 0.15 : 0.175, F ? 0.17 : 0.19, 0.56, 28), shirt); chest.scale.z = 0.66; chest.position.y = 0.28; torso.add(chest);
+  const sh = new T.Mesh(new T.SphereGeometry(0.2, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2), shirt); sh.scale.set(F ? 0.9 : 1.08, 0.42, 0.66); sh.position.y = 0.55; torso.add(sh);
+  if (F) {
+    const corset = new T.Mesh(new T.CylinderGeometry(0.155, 0.172, 0.34, 28), std(0x1e1012, 0.6)); corset.scale.z = 0.68; corset.position.y = 0.2; torso.add(corset);
+    for (let i = 0; i < 5; i++) { const lace = new T.Mesh(new T.BoxGeometry(0.05, 0.005, 0.005), std(0xd8c090, 0.5)); lace.position.set(0, 0.07 + i * 0.06, 0.116); lace.rotation.z = i % 2 ? 0.4 : -0.4; torso.add(lace); }
+    const bust = ball(0.095, shirt, V(0, 0.44, 0.07)); bust.scale.set(1.5, 0.8, 0.85); torso.add(bust);
+    const neckl = new T.Mesh(new T.TorusGeometry(0.06, 0.006, 6, 24), std(0x101010, 0.4)); neckl.rotation.x = Math.PI / 2 - 0.3; neckl.position.set(0, 0.6, 0.02); torso.add(neckl);
+    const gem = ball(0.014, std(0xd8b04a, 0.2, { metalness: 0.8 }), V(0, 0.57, 0.08)); torso.add(gem);
+  } else {
+    const v = new T.Mesh(new T.CylinderGeometry(0.183, 0.198, 0.5, 32, 1, true, 0.38, Math.PI * 2 - 0.76), vest); v.scale.z = 0.68; v.position.y = 0.27; torso.add(v);
+    for (let i = 0; i < 4; i++) [-1, 1].forEach((s) => { const b = ball(0.008, std(0xc8a050, 0.3, { metalness: 0.7 }), V(s * 0.05, 0.12 + i * 0.08, 0.125)); torso.add(b); });
+    const band = new T.Mesh(new T.TorusGeometry(0.068, 0.02, 8, 24), std(o.bandana, 0.85)); band.rotation.x = Math.PI / 2 - 0.15; band.position.y = 0.6; torso.add(band);
+    const knot = new T.Mesh(new T.ConeGeometry(0.06, 0.1, 3), std(o.bandana, 0.85)); knot.rotation.set(0.15, 0, Math.PI); knot.scale.z = 0.3; knot.position.set(0, 0.53, 0.1); torso.add(knot);
+    if (o.coat) {
+      const coat = new T.Mesh(new T.CylinderGeometry(0.195, 0.215, 0.58, 32, 1, true, 0.55, Math.PI * 2 - 1.1), std(o.coat, 0.85, { side: T.DoubleSide })); coat.scale.z = 0.7; coat.position.y = 0.27; torso.add(coat);
+      const csh = new T.Mesh(new T.SphereGeometry(0.212, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2), std(o.coat, 0.85)); csh.scale.set(1.08, 0.42, 0.68); csh.position.y = 0.55; torso.add(csh);
+    }
+  }
+  const neck = new T.Mesh(new T.CylinderGeometry(0.048, 0.055, 0.12, 14), skinD); neck.position.y = 0.64; torso.add(neck);
+
+  // baş
+  const head = new T.Group(); head.position.y = 0.79; torso.add(head);
+  const R = 0.112;
+  const skull = new T.Mesh(new T.SphereGeometry(R, 32, 24), skin); skull.scale.set(0.9, 1.05, 0.97); head.add(skull);
+  const jaw = new T.Mesh(new T.SphereGeometry(R * 0.82, 28, 20), skin); jaw.scale.set(F ? 0.86 : 0.95, 0.85, 0.98); jaw.position.set(0, -0.042, 0.012); head.add(jaw);
+  [-1, 1].forEach((s) => { const ear = ball(0.024, skinD, V(s * 0.1, -0.005, -0.005)); ear.scale.set(0.45, 1, 0.8); head.add(ear); });
+  const nose = new T.Mesh(new T.ConeGeometry(0.017, 0.05, 12), skinD); nose.rotation.x = Math.PI / 2 - 0.35; nose.position.set(0, -0.006, 0.108); head.add(nose);
+  head.add(ball(0.012, skinD, V(0, -0.024, 0.116)));
+  const brow = new T.Mesh(new T.SphereGeometry(R * 0.95, 24, 8, Math.PI * 0.15, Math.PI * 0.7, Math.PI * 0.26, Math.PI * 0.07), skinD); brow.position.z = 0.005; head.add(brow);
+  // gözler
+  const eyes = [];
+  const sclera = std(0xf2ece4, 0.3), irisM = std(o.eye, 0.35), pupil = std(0x050505, 0.2);
+  [-1, 1].forEach((s) => {
+    const eye = new T.Group(); eye.position.set(s * 0.04, 0.014, 0.1);
+    eye.add(ball(0.019, sclera)); eye.scale.z = 0.7;
+    const ir = ball(0.0105, irisM, V(0, 0, 0.0155)); ir.scale.z = 0.45; eye.add(ir);
+    const pp = ball(0.005, pupil, V(0, 0, 0.0195)); pp.scale.z = 0.4; eye.add(pp);
+    const glint = ball(0.0022, new T.MeshBasicMaterial({ color: 0xffffff }), V(0.004, 0.004, 0.0205)); eye.add(glint);
+    const lid = new T.Mesh(new T.SphereGeometry(0.0205, 16, 8, 0, Math.PI * 2, 0, Math.PI * 0.2), skinD); eye.add(lid);
+    head.add(eye); eyes.push(eye);
+    const eb = new T.Mesh(new T.BoxGeometry(0.04, F ? 0.006 : 0.01, 0.012), hairM); eb.position.set(s * 0.042, 0.047, 0.11); eb.rotation.z = s * (F ? -0.15 : 0.08); eb.rotation.y = s * 0.25; head.add(eb);
+    if (F) { const lash = new T.Mesh(new T.BoxGeometry(0.034, 0.004, 0.01), dark); lash.position.set(s * 0.04, 0.03, 0.113); lash.rotation.z = s * -0.1; head.add(lash); }
+  });
+  // ağız
+  const lips = new T.Mesh(new T.CapsuleGeometry(0.006, 0.03, 4, 8), std(F ? 0xa8323a : 0x7a3a30, 0.5)); lips.rotation.z = Math.PI / 2; lips.position.set(0, -0.058, 0.098); head.add(lips);
+  // sakal / bıyık
+  if (o.beard === 'full') {
+    const bd = new T.Mesh(new T.SphereGeometry(R * 0.88, 28, 16, 0, Math.PI, Math.PI * 0.5, Math.PI * 0.42), hairM); bd.position.set(0, -0.028, 0.012); bd.scale.set(0.98, 1.0, 1.02); head.add(bd);
+  } else if (o.beard === 'stubble') {
+    const bd = new T.Mesh(new T.SphereGeometry(R * 0.84, 28, 16, 0, Math.PI, Math.PI * 0.55, Math.PI * 0.4), std(new T.Color(o.hair).lerp(new T.Color(o.skin), 0.5), 0.95)); bd.position.set(0, -0.04, 0.013); bd.scale.set(0.97, 0.87, 0.99); head.add(bd);
+  }
+  if (o.stache) {
+    const st = new T.Mesh(new T.CapsuleGeometry(0.011, 0.05, 4, 10), hairM); st.rotation.z = Math.PI / 2; st.position.set(0, -0.042, 0.107); head.add(st);
+    [-1, 1].forEach((s) => { const e = new T.Mesh(new T.CapsuleGeometry(0.008, 0.025, 4, 8), hairM); e.position.set(s * 0.034, -0.056, 0.1); e.rotation.z = s * 0.4; head.add(e); });
+  }
+  // saç (yüzü kapatmaz: sadece arka ve yanlar)
+  const hairBack = new T.Mesh(new T.SphereGeometry(R * 1.04, 28, 18, Math.PI, Math.PI, 0, Math.PI * 0.62), hairM); hairBack.scale.set(0.92, 1.06, 0.99); head.add(hairBack);
+  if (!F) [-1, 1].forEach((s) => { const sb = new T.Mesh(new T.BoxGeometry(0.018, 0.05, 0.03), hairM); sb.position.set(s * 0.094, 0.0, 0.03); head.add(sb); });
+  if (F) {
+    const fall = new T.Mesh(new T.CapsuleGeometry(0.07, 0.18, 6, 14), hairM); fall.scale.set(1.35, 1, 0.55); fall.position.set(0, -0.14, -0.07); head.add(fall);
+    [-1, 1].forEach((s) => { const c = new T.Mesh(new T.CapsuleGeometry(0.03, 0.14, 4, 10), hairM); c.position.set(s * 0.1, -0.1, 0.0); c.rotation.z = s * 0.12; head.add(c); });
+  }
+  // şapka
+  const hat = new T.Group(); hat.position.set(0, 0.07, -0.005); hat.rotation.x = -0.16; head.add(hat);
+  const bw = F ? 0.17 : 0.215;
+  const brim = new T.Mesh(new T.LatheGeometry([V(0.07, 0, 0), V(bw * 0.75, -0.004, 0), V(bw * 0.95, 0.006, 0), V(bw, 0.026, 0)], 40), std(o.hatC, 0.9, { side: T.DoubleSide }));
+  brim.scale.set(1, 1, 0.9); hat.add(brim);
+  const crown = new T.Mesh(new T.CylinderGeometry(F ? 0.07 : 0.078, F ? 0.09 : 0.098, F ? 0.08 : 0.12, 32), hatM); crown.position.y = F ? 0.04 : 0.06; crown.scale.z = 0.88; hat.add(crown);
+  const dent = new T.Mesh(new T.BoxGeometry(0.02, 0.02, 0.15), std(new T.Color(o.hatC).multiplyScalar(0.7), 0.9)); dent.position.y = F ? 0.08 : 0.12; hat.add(dent);
+  const hband = new T.Mesh(new T.CylinderGeometry(0.099, 0.1, 0.022, 32, 1, true), std(F ? 0x6a1020 : 0x1a120a, 0.6)); hband.position.y = 0.014; hband.scale.z = 0.88; hat.add(hband);
+  if (F) { const fth = ball(0.03, std(0xe8dcc8, 0.9)); fth.scale.set(0.3, 0.5, 2.4); fth.position.set(0.09, 0.035, -0.04); fth.rotation.set(-0.25, 0.3, 0); hat.add(fth); }
+
+  // kollar + eller + kağıt yelpazesi
+  const sleeve = std(F ? o.vest : (o.coat || o.shirt), 0.85);
+  const armL = [], hands = [];
+  const handM = skin;
+  [-1, 1].forEach((s) => {
+    const up = limbMesh(0.05, sleeve), fo = limbMesh(0.042, sleeve);
+    const elb = ball(0.048, sleeve), cuff = new T.Mesh(new T.CylinderGeometry(0.045, 0.045, 0.03, 12), std(0xe8e0cc, 0.8));
+    const hand = new T.Group(); const palm = ball(0.04, handM); palm.scale.set(0.8, 1, 0.55); hand.add(palm);
+    const th = new T.Mesh(new T.CapsuleGeometry(0.012, 0.03, 4, 8), handM); th.position.set(-s * 0.025, 0.02, 0.02); th.rotation.z = -s * 0.8; hand.add(th);
+    root.add(up, fo, elb, cuff, hand);
+    armL.push({ s, up, fo, elb, cuff, hand }); hands.push(hand);
+  });
+  const fan = new T.Group(); root.add(fan);
+  const fanCards = [];
+  for (let i = 0; i < 11; i++) {
+    const g = new T.BoxGeometry(0.11, 0.16, 0.003).translate(0, 0.08, 0);
+    const c = new T.Mesh(g, [white, white, white, white, backM, white]);
+    c.rotation.z = (i - 5) * 0.12; c.position.z = i * 0.0025; c.position.x = (i - 5) * 0.004; fan.add(c); fanCards.push(c);
+  }
+  shadowAll(root);
+  return { root, torso, head, eyes, hat, arms: armL, hands, fan };
+}
+
+// kol pozu: omuz → dirsek → el (torso dönüşünü takip eder)
+const tmpM = new T.Matrix4();
+function poseArms(f, handTargets) {
+  f.torso.updateMatrix();
+  f.arms.forEach((a, i) => {
+    const shoulder = V(a.s * 0.19, 0.53, -0.01).applyMatrix4(f.torso.matrix);
+    const hand = handTargets[i];
+    const mid = shoulder.clone().lerp(hand, 0.5); mid.x += a.s * 0.08; mid.y -= 0.12; mid.z -= 0.02;
+    a.up.userData.set(shoulder, mid); a.fo.userData.set(mid, hand);
+    a.elb.position.copy(mid); a.hand.position.copy(hand);
+    a.cuff.position.copy(mid.clone().lerp(hand, 0.88)); a.cuff.quaternion.copy(a.fo.quaternion);
+    a.hand.quaternion.copy(a.fo.quaternion);
+  });
+}
+
+// ---------- oyuncular ----------
+const P = [
+  { name: 'Mehmet', pos: V(0, 0, -1.5), opts: { skin: '#d9a47a', shirt: '#d8cdb4', vest: '#3a2a1e', pants: '#3a3026', coat: '#4a3524', hair: '#2a1c12', hatC: '#5a4630', bandana: '#7a1e16', beard: 'full', stache: true, eye: '#4a2e14' }, cig: true },
+  { name: 'Zeynep', pos: V(-1.42, 0, 0.0), opts: { skin: '#efc6a4', shirt: '#e8dcc6', vest: '#5a1a28', pants: '#2a1a1e', hair: '#3a2010', hatC: '#2a1a14', eye: '#3a5a3a', female: true } },
+  { name: 'Ayşe', pos: V(1.42, 0, 0.0), opts: { skin: '#e2b08a', shirt: '#efe6d4', vest: '#1f3a4a', pants: '#1a1a22', hair: '#8a4a1c', hatC: '#c8b08a', eye: '#2a4a6a', female: true } },
+  { name: 'Hüseyin', pos: V(-1.3, 0, -2.5), opts: { skin: '#c89068', shirt: '#b8ad94', vest: '#2a2a2a', pants: '#2e2a24', hair: '#4a4038', hatC: '#2a2420', bandana: '#3a3a5a', beard: 'stubble', stache: true, eye: '#3a2a1a' }, extra: true, face: Math.PI },
+  { name: 'Barmen', pos: V(1.4, 0.32, -3.85), opts: { skin: '#e0b088', shirt: '#e8e2d4', vest: '#3a1a12', pants: '#222', hair: '#1a120c', hatC: '#3a3a3a', bandana: '#1a1a1a', beard: 'none', stache: true, eye: '#2a1a0a' }, extra: true, face: 0.15, standing: true },
+];
+const seats = P.map((p, idx) => {
+  const f = build(p.opts);
+  f.root.position.copy(p.pos);
+  if (p.face !== undefined) f.root.rotation.y = p.face; else f.root.lookAt(0, 0, 0);
+  scene.add(f.root);
+  if (p.extra) f.fan.visible = false;
+  let tag = null;
+  if (!p.extra) { tag = document.createElement('div'); tag.className = 'tag'; tag.innerHTML = `${p.name}<small>14 kağıt</small>`; document.body.appendChild(tag); }
+  const s = { p, f, tag, idx, phase: idx * 1.7, lean: 0, nextBlink: 0, blinkUntil: 0, glance: 0, glanceT: 0, reach: 0 };
+  if (p.cig) {
+    const cig = new T.Group(); cig.position.set(0.03, -0.06, 0.1); cig.rotation.set(0.25, 0.45, 0);
+    const stick = new T.Mesh(new T.CylinderGeometry(0.0045, 0.0045, 0.07, 8), std(0xeee8dc, 0.8)); stick.rotation.x = Math.PI / 2; stick.position.z = 0.035; cig.add(stick);
+    const tip = ball(0.005, new T.MeshBasicMaterial({ color: 0xff5a1a }), V(0, 0, 0.071)); cig.add(tip);
+    const tipGlow = new T.Sprite(new T.SpriteMaterial({ map: softTex, color: 0xff6a20, transparent: true, blending: T.AdditiveBlending, depthWrite: false })); tipGlow.scale.setScalar(0.05); tipGlow.position.copy(tip.position); cig.add(tipGlow);
+    f.head.add(cig); s.cig = { tip, tipGlow };
+  }
+  if (p.extra && idx === 3) { const gl = glass(0, 0); table.remove(gl); gl.position.set(0.2, 1.1, 0.33); f.root.add(gl); }
+  return s;
+});
+const players = seats.filter((s) => !s.p.extra);
+
+// ---------- duman & toz ----------
+const smoke = [];
+for (let i = 0; i < 38; i++) {
+  const m = new T.Sprite(new T.SpriteMaterial({ map: smokeTex, color: 0xc8b49c, transparent: true, opacity: 0.05 + Math.random() * 0.07, depthWrite: false }));
+  m.position.set((Math.random() - 0.5) * 7, 1.6 + Math.random() * 1.6, -3.8 + Math.random() * 5);
+  m.scale.setScalar(1.2 + Math.random() * 1.8);
+  m.userData = { v: V((Math.random() - 0.5) * 0.04, 0.01 + Math.random() * 0.02, (Math.random() - 0.5) * 0.03), rot: (Math.random() - 0.5) * 0.05 };
+  scene.add(m); smoke.push(m);
+}
+const puffs = [];
+const puffMat = new T.SpriteMaterial({ map: smokeTex, color: 0xd8ccbc, transparent: true, depthWrite: false });
+function puff(pos) {
+  const m = new T.Sprite(puffMat.clone()); m.position.copy(pos); m.scale.setScalar(0.05);
+  m.userData = { age: 0, life: 4 + Math.random() * 2, v: V((Math.random() - 0.5) * 0.05, 0.12 + Math.random() * 0.06, (Math.random() - 0.5) * 0.05) };
+  scene.add(m); puffs.push(m);
+}
+const dustN = 380, dustG = new T.BufferGeometry(), dustP = new Float32Array(dustN * 3);
+for (let i = 0; i < dustN; i++) { const t = Math.random(); const p = winP.clone().lerp(floorP, t); dustP[i * 3] = p.x + (Math.random() - 0.5) * 1.2; dustP[i * 3 + 1] = p.y + (Math.random() - 0.5) * 1.2; dustP[i * 3 + 2] = p.z + (Math.random() - 0.5) * 1.2; }
+dustG.setAttribute('position', new T.BufferAttribute(dustP, 3));
+const dust = new T.Points(dustG, new T.PointsMaterial({ map: softTex, color: 0xfff0d0, size: 0.022, transparent: true, opacity: 0.8, blending: T.AdditiveBlending, depthWrite: false }));
+scene.add(dust);
+
+// ---------- oyuncunun eli (HTML) ----------
+const handCards = [['5', '♠', 0], ['6', '♠', 0], ['9', '♠', 0], ['2', '♥', 1], ['7', '♥', 1], ['A', '♥', 1], ['3', '♣', 0], ['5', '♣', 0], ['7', '♣', 0], ['9', '♣', 0], ['Q', '♣', 0], ['4', '♦', 1], ['5', '♦', 1], ['7', '♦', 1]];
+const handEl = document.getElementById('hand');
+handCards.forEach(([r, s, red], i) => { const d = document.createElement('div'); d.className = 'card ' + (red ? 'r' : 'b'); d.innerHTML = r + '<br>' + s; d.style.transform = `rotate(${(i - 6.5) * 2.2}deg) translateY(${Math.abs(i - 6.5) * 2.5}px)`; handEl.appendChild(d); });
+
+// ---------- sıra döngüsü + kart atma ----------
+let turn = 0, turnStart = 0;
+const flying = [];
+const ranks = [['K', '♠', 0], ['3', '♦', 1], ['J', '♣', 0], ['8', '♥', 1], ['10', '♠', 0], ['2', '♣', 0]];
+let rk = 0;
+function throwCard(s) {
+  const [r, su, red] = ranks[rk++ % ranks.length];
+  const c = faceCard(r, su, !!red);
+  const from = new T.Vector3(); s.f.hands[1].getWorldPosition(from);
+  c.position.copy(from); c.castShadow = true; scene.add(c);
+  const to = new T.Vector3(); discard.localToWorld(to.set(0, 0.004 + discard.children.length * 0.004, 0));
+  flying.push({ c, from, to, t: 0, rot: (Math.random() - 0.5) * 0.8 });
+}
+
+// ---------- kamera etkileşimi ----------
+let drag = null, yaw = 0, pitch = 0, tyaw = 0, tpitch = 0;
+addEventListener('pointerdown', (e) => { drag = { x: e.clientX, y: e.clientY, yaw: tyaw, pitch: tpitch }; });
+addEventListener('pointermove', (e) => { if (!drag) return; tyaw = Math.max(-0.5, Math.min(0.5, drag.yaw - (e.clientX - drag.x) * 0.003)); tpitch = Math.max(-0.15, Math.min(0.35, drag.pitch + (e.clientY - drag.y) * 0.002)); });
+addEventListener('pointerup', () => { drag = null; });
+function resize() { renderer.setSize(innerWidth, innerHeight); camera.aspect = innerWidth / innerHeight; camera.fov = camera.aspect < 1 ? 66 : 43; camera.updateProjectionMatrix(); }
+addEventListener('resize', resize); resize();
+
+// ---------- animasyon ----------
+const clock = new T.Clock();
+let lastPuff = 0;
+function frame() {
+  requestAnimationFrame(frame);
+  const dt = Math.min(clock.getDelta(), 0.05), t = clock.elapsedTime, now = t * 1000;
+  yaw += (tyaw - yaw) * 0.08; pitch += (tpitch - pitch) * 0.08;
+  const drift = reduce ? 0 : Math.sin(t * 0.15) * 0.04;
+  const off = camBase.clone().sub(camTarget);
+  off.applyAxisAngle(V(0, 1, 0), yaw + drift);
+  const right = V(1, 0, 0).applyAxisAngle(V(0, 1, 0), yaw + drift);
+  off.applyAxisAngle(right, -pitch);
+  camera.position.copy(camTarget).add(off); camera.lookAt(camTarget);
+
+  // sıra
+  if (t - turnStart > 4.2) { turnStart = t; turn = (turn + 1) % (players.length + 1); }
+  const tt = t - turnStart;
+
+  lamps.forEach((l) => { const fl = reduce ? 1 : 0.9 + Math.sin(t * 7 + l.ph) * 0.04 + Math.sin(t * 13.7 + l.ph * 2) * 0.03 + (Math.random() - 0.5) * 0.04; l.L.intensity = l.base * fl; l.glow.material.opacity = 0.7 * fl; });
+
+  seats.forEach((s) => {
+    const f = s.f, ph = s.phase;
+    const myTurn = players[turn] === s;
+    const br = reduce ? 0 : Math.sin(t * 1.6 + ph);
+    f.torso.scale.set(1 + 0.008 * br, 1 + 0.012 * br, 1 + 0.008 * br);
+    s.lean += ((myTurn ? 0.1 : 0) - s.lean) * 0.06;
+    f.torso.rotation.x = s.lean;
+    // bakışlar: arada bir başka oyuncuya bakar
+    if (t > s.glanceT) { s.glanceT = t + 2 + Math.random() * 4; s.glance = myTurn ? 0 : (Math.random() - 0.5) * 1.1; }
+    const hy = (s.p.extra ? Math.sin(t * 0.3 + ph) * 0.4 : s.glance) + (reduce ? 0 : Math.sin(t * 0.7 + ph) * 0.05);
+    f.head.rotation.y += (hy - f.head.rotation.y) * 0.05;
+    f.head.rotation.x = (myTurn ? 0.16 : 0.04) + (reduce ? 0 : Math.sin(t * 0.5 + ph) * 0.04);
+    f.head.rotation.z = Math.sin(t * 0.4 + ph) * 0.03;
+    f.eyes.forEach((e) => { e.rotation.y = -f.head.rotation.y * 0.35; });
+    if (!reduce && now > s.nextBlink) { s.blinkUntil = now + 120; s.nextBlink = now + 2000 + Math.random() * 4500; }
+    f.eyes.forEach((e) => { e.scale.y = now < s.blinkUntil ? 0.12 : 1; });
+    // eller
+    const sway = reduce ? 0 : Math.sin(t * 0.9 + ph) * 0.01;
+    let reachK = 0;
+    if (myTurn) { reachK = tt > 1.6 && tt < 2.6 ? Math.sin(((tt - 1.6) / 1.0) * Math.PI) : 0; if (tt > 2.05 && !s.thrown) { s.thrown = true; throwCard(s); } }
+    else s.thrown = false;
+    const hl = V(-0.075, 0.98 + sway, 0.31), hr = V(0.075, 0.98 - sway, 0.31);
+    if (s.p.extra) { hl.set(-0.12, 1.05, 0.3); hr.set(0.18, 1.12, 0.32); }
+    hr.lerp(V(0.12, 0.86, 0.62), reachK);
+    poseArms(f, [hl, hr]);
+    f.fan.position.set(-0.0 + sway, 0.99, 0.32);
+    f.fan.rotation.set(-0.45, 0, Math.sin(t * 0.8 + ph) * 0.03);
+    if (s.tag) {
+      const v = V(0, 1.62, 0); f.root.localToWorld(v); v.project(camera);
+      s.tag.style.left = ((v.x + 1) / 2) * innerWidth + 'px'; s.tag.style.top = ((1 - v.y) / 2) * innerHeight + 'px';
+      s.tag.classList.toggle('turn', myTurn);
+    }
+    if (s.cig) {
+      const k = 0.6 + 0.4 * Math.max(0, Math.sin(t * 0.8));
+      s.cig.tipGlow.material.opacity = k; s.cig.tipGlow.scale.setScalar(0.03 + k * 0.03);
+      if (t - lastPuff > 0.22 && !reduce) { lastPuff = t; const p = new T.Vector3(); s.cig.tip.getWorldPosition(p); puff(p); }
+    }
+  });
+
+  flying.forEach((fl) => {
+    fl.t = Math.min(1, fl.t + dt * 1.8);
+    const k = fl.t * fl.t * (3 - 2 * fl.t);
+    fl.c.position.lerpVectors(fl.from, fl.to, k); fl.c.position.y += Math.sin(k * Math.PI) * 0.15;
+    fl.c.rotation.set(0, fl.rot * k + k * 2.4, 0);
+    if (fl.t >= 1 && !fl.done) { fl.done = true; scene.remove(fl.c); discard.add(fl.c); fl.c.position.set(0, 0.004 + discard.children.length * 0.004, 0); fl.c.rotation.y = fl.rot; if (discard.children.length > 6) discard.remove(discard.children[1]); }
+  });
+  for (let i = flying.length - 1; i >= 0; i--) if (flying[i].done) flying.splice(i, 1);
+
+  smoke.forEach((m) => { if (reduce) return; m.position.addScaledVector(m.userData.v, dt); m.material.rotation += m.userData.rot * dt; if (m.position.y > 3.3) m.position.y = 1.5; if (Math.abs(m.position.x) > 3.8) m.userData.v.x *= -1; });
+  for (let i = puffs.length - 1; i >= 0; i--) {
+    const m = puffs[i], u = m.userData; u.age += dt;
+    m.position.addScaledVector(u.v, dt); u.v.x += Math.sin(t * 2 + i) * 0.002;
+    m.scale.setScalar(0.04 + u.age * 0.12); m.material.opacity = 0.35 * (1 - u.age / u.life); m.material.rotation += dt * 0.3;
+    if (u.age > u.life) { scene.remove(m); m.material.dispose(); puffs.splice(i, 1); }
+  }
+  if (!reduce) { const a = dustG.attributes.position; for (let i = 0; i < dustN; i++) { a.array[i * 3 + 1] += Math.sin(t * 0.5 + i) * 0.0006; a.array[i * 3] += Math.cos(t * 0.3 + i * 1.3) * 0.0005; } a.needsUpdate = true; }
+  renderer.render(scene, camera);
+}
+frame();
+})();
+</script>
+</body>
+</html>

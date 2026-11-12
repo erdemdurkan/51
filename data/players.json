@@ -21,10 +21,11 @@
  },
  "bf264ccc3d7b14382b44e25883dbe6a6": {
   "name": "Erdem",
-  "gold": 1000,
+  "gold": 3250,
   "created": 1794090016846,
-  "lastDaily": "2026-11-08",
-  "streak": 1
+  "lastDaily": "2026-11-12",
+  "streak": 2,
+  "avatar": 44
  },
  "7293b8afd4a72470ea80a0bb4f32f988": {
   "name": "Oyuncu",
@@ -326,5 +327,230 @@
   "created": 1794179448464,
   "streak": 1,
   "lastDaily": "2026-11-09"
+ },
+ "9476cdb0faa98d4326ce15b2587e9a99": {
+  "name": "Test",
+  "gold": 0,
+  "created": 1794435919511,
+  "streak": 0,
+  "lastDaily": null
+ },
+ "a70a48e16ece22fa893eab62cd7236f5": {
+  "name": "Test",
+  "gold": 0,
+  "created": 1794435919512,
+  "streak": 0,
+  "lastDaily": null
+ },
+ "8302c277ecbe8a8d397c2b92ca275140": {
+  "name": "Test",
+  "gold": 0,
+  "created": 1794435993705,
+  "streak": 0,
+  "lastDaily": null
+ },
+ "cbcea2a731c68fe961d77e58f93aeb87": {
+  "name": "Test",
+  "gold": 0,
+  "created": 1794436073248,
+  "streak": 0,
+  "lastDaily": null
+ },
+ "0532a31bbb890854ec76a85028b7ebf7": {
+  "name": "Test",
+  "gold": 0,
+  "created": 1794436921320,
+  "streak": 0,
+  "lastDaily": null
+ },
+ "aed461fb01c7d4947abe3d1693a23857": {
+  "name": "Test",
+  "gold": 0,
+  "created": 1794436933088,
+  "streak": 0,
+  "lastDaily": null
+ },
+ "728e7d613961d655ed4bfca6f40020db": {
+  "name": "Test",
+  "gold": 0,
+  "created": 1794437018252,
+  "streak": 0,
+  "lastDaily": null
+ },
+ "854efab0562859a25890ab60d6b9182c": {
+  "name": "Test",
+  "gold": 0,
+  "created": 1794437327866,
+  "streak": 0,
+  "lastDaily": null
+ },
+ "11b70bb31670cc2ff59075e2904efe73": {
+  "name": "Test",
+  "gold": 0,
+  "created": 1794437345040,
+  "streak": 0,
+  "lastDaily": null
+ },
+ "18fcfa61aeffcaf213de525192d4d58a": {
+  "name": "Test",
+  "gold": 0,
+  "created": 1794437365445,
+  "streak": 0,
+  "lastDaily": null
+ },
+ "5d83d4b9f697be0bdedfc99b6032b244": {
+  "name": "Test",
+  "gold": 0,
+  "created": 1794437849102,
+  "streak": 0,
+  "lastDaily": null
+ },
+ "39c1ff80ec49067ceec6d0169ffcd52d": {
+  "name": "Test",
+  "gold": 0,
+  "created": 1794437908589,
+  "streak": 0,
+  "lastDaily": null
+ },
+ "098dcdda4a0a48c60f39f022da158942": {
+  "name": "Test",
+  "gold": 0,
+  "created": 1794437924681,
+  "streak": 0,
+  "lastDaily": null
+ },
+ "20da3d606bd81782889c4ced6bf2e3cd": {
+  "name": "Test",
+  "gold": 0,
+  "created": 1794437960686,
+  "streak": 0,
+  "lastDaily": null
+ },
+ "36ac45c1e76beb1adfa7294f6e5ad654": {
+  "name": "Test",
+  "gold": 0,
+  "created": 1794438301165,
+  "streak": 0,
+  "lastDaily": null
+ },
+ "011bce614583b7457bf7466b4592ce7d": {
+  "name": "Test",
+  "gold": 0,
+  "created": 1794438347623,
+  "streak": 0,
+  "lastDaily": null
+ },
+ "60f74d5e5c311701fedf3d9baa073c55": {
+  "name": "Test",
+  "gold": 0,
+  "created": 1794438795013,
+  "streak": 0,
+  "lastDaily": null
+ },
+ "068a7577e8cd9b02e92d6cfc53cf2a67": {
+  "name": "Test",
+  "gold": 0,
+  "created": 1794438838581,
+  "streak": 0,
+  "lastDaily": null
+ },
+ "811ff9dd852c50494fc57b16fa62de68": {
+  "name": "Test",
+  "gold": 0,
+  "created": 1794438882875,
+  "streak": 0,
+  "lastDaily": null
+ },
+ "afbb71ddaf1f7f7c372bb0afd50f6a3b": {
+  "name": "Test",
+  "gold": 0,
+  "created": 1794439088466,
+  "streak": 0,
+  "lastDaily": null
+ },
+ "ce4a2ccc3bfc3c8b53b1f4e158be6065": {
+  "name": "Test",
+  "gold": 0,
+  "created": 1794439129288,
+  "streak": 0,
+  "lastDaily": null
+ },
+ "7cc4a4668d2dcccf0d30fdfbf6357d69": {
+  "name": "Test",
+  "gold": 0,
+  "created": 1794440434827,
+  "streak": 0,
+  "lastDaily": null,
+  "avatar": 37
+ },
+ "36dfa481b944526c4ec7b255e41e6893": {
+  "name": "Test",
+  "gold": 0,
+  "created": 1794442560500,
+  "streak": 0,
+  "lastDaily": null
+ },
+ "fdf5e869841f14e5cd6ee42bbf3509c3": {
+  "name": "Test",
+  "gold": 0,
+  "created": 1794442696809,
+  "streak": 0,
+  "lastDaily": null
+ },
+ "62672ed6cd852b806db54a55daec1801": {
+  "name": "Test",
+  "gold": 0,
+  "created": 1794444100759,
+  "streak": 0,
+  "lastDaily": null
+ },
+ "267b90bc334057230b2aa346a3e30bf3": {
+  "name": "Test",
+  "gold": 0,
+  "created": 1794444119062,
+  "streak": 0,
+  "lastDaily": null
+ },
+ "cc23d4c294a2ebf80bad5a1af7c00a70": {
+  "name": "Test",
+  "gold": 0,
+  "created": 1794444154307,
+  "streak": 0,
+  "lastDaily": null
+ },
+ "1328612c049436b05fcf9a958ee9cba4": {
+  "name": "Test",
+  "gold": 0,
+  "created": 1794444175701,
+  "streak": 0,
+  "lastDaily": null
+ },
+ "c0f8f8f9313b66d571c23c2a87de547d": {
+  "name": "Test",
+  "gold": 0,
+  "created": 1794446074605,
+  "streak": 0,
+  "lastDaily": null
+ },
+ "eb2fbcf8262823edb067e5c5a4881fa4": {
+  "name": "Test",
+  "gold": 0,
+  "created": 1794446117098,
+  "streak": 0,
+  "lastDaily": null
+ },
+ "b421c690cab8ed04527f347fa099a620": {
+  "name": "Test",
+  "gold": 0,
+  "created": 1794446140916,
+  "streak": 0,
+  "lastDaily": null
+ },
+ "2c37cce788e32e828005e7ef18b539f1": {
+  "name": "Test",
+  "gold": 0,
+  "created": 1794448248778,
+  "streak": 0,
+  "lastDaily": null
  }
 }

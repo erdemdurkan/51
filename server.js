@@ -81,6 +81,9 @@ function ensureProfile(pid, name) {
   return pid;
 }
 const goldOf = (pid) => (players[pid] ? players[pid].gold : 0);
+// Profil resmi: kütüphanedeki avatar numarası (public/avatar.js, Avatar.COUNT ile aynı)
+const AVATAR_COUNT = 120;
+const avatarOf = (pid) => (players[pid] && Number.isInteger(players[pid].avatar) ? players[pid].avatar : null);
 const cleanFee = (f) => Math.floor(Number(f) || 0);
 
 // Oyun bitince yerdeki parayı dağıt (sadece 4 gerçek oyunculu online masa)
@@ -158,7 +161,7 @@ function broadcast(room) {
       mySeat: seat,
       isHost: p.token === room.hostToken,
       settings: room.settings,
-      seats: room.seats.map((s) => s && { name: s.name, bot: !!s.bot, connected: !!(s.socketId || s.bot), host: s.token === room.hostToken, gold: s.pid ? goldOf(s.pid) : null }),
+      seats: room.seats.map((s) => s && { name: s.name, bot: !!s.bot, connected: !!(s.socketId || s.bot), host: s.token === room.hostToken, gold: s.pid ? goldOf(s.pid) : null, avatar: s.pid ? avatarOf(s.pid) : null }),
       myGold: p.pid ? goldOf(p.pid) : null,
       money: room.money ? { fee: room.money.fee, pot: room.money.pot, payouts: room.money.payouts || null } : null,
       game: room.game ? room.game.view(seat) : null,
@@ -259,7 +262,19 @@ io.on('connection', (socket) => {
   handle('hello', ({ pid, name }) => {
     pid = ensureProfile(pid, name);
     socket.data.pid = pid;
-    return { pid, gold: goldOf(pid), daily: dailyInfo(players[pid]) };
+    return { pid, gold: goldOf(pid), daily: dailyInfo(players[pid]), avatar: avatarOf(pid) };
+  });
+
+  // Profil resmini değiştir: oturduğu masalardaki herkese yeni resim gider
+  handle('setAvatar', ({ avatar }) => {
+    const pid = socket.data.pid;
+    if (!pid || !players[pid]) throw new Error('Önce giriş yapılmalı.');
+    const n = Number(avatar);
+    if (!Number.isInteger(n) || n < 0 || n >= AVATAR_COUNT) throw new Error('Geçersiz avatar.');
+    players[pid].avatar = n;
+    savePlayers();
+    for (const room of rooms.values()) if (room.seats.some((s) => s && s.pid === pid)) broadcast(room);
+    return { avatar: n };
   });
 
   handle('claimDaily', () => {
