@@ -1533,3 +1533,12 @@ body.flat #discardHint { left: 50%; right: auto; transform: translateX(-50%); bo
 .mbtn:active { cursor: grabbing; }
 .group-ghost { position: fixed; z-index: 1000; pointer-events: none; transform: rotate(-3deg) scale(1.04); filter: drop-shadow(0 16px 24px rgba(0,0,0,.45)); }
 .group-ghost .card { box-shadow: 0 2px 6px rgba(0,0,0,.3); }
+/* Per / Çift üstüne gelince: %50 büyür, yazı grubun kağıtlarına dönüşür */
+.mbtn { transition: opacity .15s, transform .15s ease, box-shadow .15s; transform-origin: 50% 100%; }
+.mbtn.hot { transform: scale(1.5); z-index: 400; box-shadow: 0 0 0 2px #fff, 0 0 16px rgba(255,214,90,.95), 0 4px 10px #0009; display: inline-flex; gap: 3px; padding: 3px 6px; }
+.mbtn.pair.hot { box-shadow: 0 0 0 2px #fff, 0 0 16px rgba(110,230,150,.95), 0 4px 10px #0009; }
+.mbtn .cb { display: inline-block; min-width: 20px; padding: 0 3px; border-radius: 4px; background: #fffdf5; color: #151515; font-weight: 800; text-align: center; box-shadow: 0 1px 2px #0006; }
+.mbtn .cb.r { color: #d01f1f; }
+.mbtn .cb.w { background: linear-gradient(#fff3c0, #f2c94c); }
+.mbtn .cb.j { color: #5b2aa6; }
+#hand .card.grp-hi { filter: brightness(1.06) drop-shadow(0 0 10px rgba(255,214,90,.9)); margin-top: -10px; }

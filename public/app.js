@@ -642,6 +642,7 @@ function layoutHand(dragId = null, gap = null) {
 
   // Taşı / İndir düğmeleri
   box.querySelectorAll('.mbtn').forEach((b) => b.remove());
+  box.querySelectorAll('.grp-hi').forEach((c) => c.classList.remove('grp-hi'));
   if (dragId || gap || !S.game) return;
   const byId = Object.fromEntries(S.game.myHand.map((c) => [c.id, c]));
   // Düğmeler yalnızca fare o perin üstündeyken görünür: kağıtlara ve düğmelere grup anahtarı yazılır
@@ -680,6 +681,18 @@ function layoutHand(dragId = null, gap = null) {
     b.style.left = left + 'px';
     b.style.top = top + 'px';
     b.addEventListener('pointerdown', (e) => { e.stopPropagation(); e.preventDefault(); startDrag(e, 'group', ids, b); });
+    // üstüne gelince: yazı grubun kağıtlarına dönüşür, buton büyür, eldeki kağıtlar parlar
+    const combo = ids.map((id) => byId[id]).filter(Boolean).map((c) => (c.joker
+      ? '<span class="cb j">★</span>'
+      : `<span class="cb${c.s === 'H' || c.s === 'D' ? ' r' : ''}${isWild(c, S.game.okey) ? ' w' : ''}">${rl(c.r)}${SYM[c.s]}</span>`)).join('');
+    const hot = (on) => {
+      if (drag && drag.kind === 'group') return;
+      b.classList.toggle('hot', on);
+      b.innerHTML = on ? combo : esc(text);
+      ids.forEach((id) => { const el = handEls.get(id); if (el) el.classList.toggle('grp-hi', on); });
+    };
+    b.addEventListener('pointerenter', () => hot(true));
+    b.addEventListener('pointerleave', () => hot(false));
     box.appendChild(b);
   };
   findGroups(hand.order, byId).forEach((g) => {
