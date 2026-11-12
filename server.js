@@ -85,6 +85,15 @@ const goldOf = (pid) => (players[pid] ? players[pid].gold : 0);
 const AVATAR_COUNT = 168; // 120 insan + 24 hayvan + 24 kostüm
 const avatarOf = (pid) => (players[pid] && Number.isInteger(players[pid].avatar) ? players[pid].avatar : null);
 const cleanFee = (f) => Math.floor(Number(f) || 0);
+// Aksesuarlar (public/accessories.js ile aynı): o masadaki oyun boyunca takılı kalır
+const ACC = {
+  sigara: { slot: 'mouth', price: 50, name: 'sigara' }, puro: { slot: 'mouth', price: 120, name: 'puro' },
+  kupe: { slot: 'ear', price: 100, name: 'altın küpe' }, inci: { slot: 'ear', price: 150, name: 'inci küpe' },
+  gozluk: { slot: 'eyes', price: 150, name: 'gözlük' }, gunes: { slot: 'eyes', price: 200, name: 'güneş gözlüğü' },
+  kolye: { slot: 'neck', price: 250, name: 'altın kolye' },
+  sapka: { slot: 'head', price: 250, name: 'fötr şapka' }, tac: { slot: 'head', price: 300, name: 'taç' },
+};
+const accOf = (room) => (room.acc = room.acc || [{}, {}, {}, {}]);
 
 // Oyun bitince yerdeki parayı dağıt (sadece 4 gerçek oyunculu online masa)
 //  1.: yarısı (2 x ücret) · 2.: ücreti geri · finali kazanan: ücreti geri · finali kaybeden: 0
@@ -163,6 +172,7 @@ function broadcast(room) {
       settings: room.settings,
       seats: room.seats.map((s) => s && { name: s.name, bot: !!s.bot, connected: !!(s.socketId || s.bot), host: s.token === room.hostToken, gold: s.pid ? goldOf(s.pid) : null, avatar: s.pid ? avatarOf(s.pid) : null }),
       myGold: p.pid ? goldOf(p.pid) : null,
+      acc: accOf(room),
       money: room.money ? { fee: room.money.fee, pot: room.money.pot, payouts: room.money.payouts || null } : null,
       game: room.game ? room.game.view(seat) : null,
       next: room.game && room.game.status === 'handOver' && room.next
@@ -391,7 +401,28 @@ io.on('connection', (socket) => {
       room.money = { fee, pot: fee * 4, settled: false };
     }
     room.game = newGame(room);
+    room.acc = [{}, {}, {}, {}]; // yeni oyun: aksesuarlar sıfırlanır
     broadcast(room);
+  });
+
+  // Aksesuar al (kendine) ya da hediye et (masadaki herhangi birine, bilgisayar dahil)
+  handle('gift', ({ toSeat, item }) => {
+    const { room, seat } = ctx();
+    const pid = socket.data.pid;
+    if (!pid || !players[pid]) throw new Error('Önce giriş yapılmalı.');
+    const it = ACC[item];
+    const to = Number(toSeat);
+    if (!it) throw new Error('Böyle bir aksesuar yok.');
+    if (!Number.isInteger(to) || to < 0 || to > 3 || !room.seats[to]) throw new Error('Oyuncu bulunamadı.');
+    const acc = accOf(room);
+    if (acc[to][it.slot] === item) throw new Error(to === seat ? 'Bu zaten sende takılı.' : 'Bu zaten onda takılı.');
+    if (goldOf(pid) < it.price) throw new Error(`Yeterli altının yok (${it.price} altın gerekli).`);
+    players[pid].gold -= it.price;
+    savePlayers();
+    acc[to][it.slot] = item;
+    room.seats.forEach((p) => { if (p && p.socketId) io.to(p.socketId).emit('giftFx', { from: seat, to, item }); });
+    broadcast(room);
+    return { gold: goldOf(pid) };
   });
 
   handle('draw', ({ src }) => {

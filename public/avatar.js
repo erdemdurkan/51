@@ -145,7 +145,7 @@ const Avatar = (() => {
   }
 
   // p: { female, seed }
-  function draw(seed, female, uid) {
+  function draw(seed, female, uid, acc = null) {
     const r = rng(seed);
     const pick = (arr) => arr[Math.floor(r() * arr.length)];
     const id = (n) => `${uid}-${n}`;
@@ -162,8 +162,9 @@ const Avatar = (() => {
     const faceRoll = r();
     const facial = female ? 'none' : faceRoll < 0.22 ? 'beard' : faceRoll < 0.34 ? 'stache' : faceRoll < 0.44 ? 'goatee' : faceRoll < 0.54 ? 'stubble' : 'none';
     const gRoll = r();
-    const glasses = gRoll < 0.12 ? 'round' : gRoll < 0.22 ? 'square' : gRoll < 0.27 ? 'sun' : 'none';
-    const earrings = female && r() < 0.5;
+    void gRoll;
+    const glasses = 'none'; // gözlük artık aksesuar
+    const earrings = female && r() < 0.5 && false; // küpe artık aksesuar
     const eyeC = pick(['#2a1a10', '#3b2a1a', '#2c4a6e', '#3d5a2a', '#5a3a1a']);
     const smile = r();
     const blink = (3.5 + r() * 4).toFixed(1);
@@ -213,15 +214,15 @@ const Avatar = (() => {
       ${scarf ? `<path d="M31 40 Q31 24 50 23 Q69 24 69 40 Q62 30 50 30 Q38 30 31 40Z" fill="${pick(SCARF)}" opacity=".0"/>` : H.front}
       ${!scarf && hw !== 'none' ? headwear(hw, r, pick, hair) : ''}
       <ellipse cx="44" cy="31" rx="9" ry="4" fill="rgba(255,255,255,.12)"/>
-    </g></svg>`;
+    </g>${acc && typeof Acc !== 'undefined' ? Acc.render(acc, null, id('acc')) : ''}</svg>`;
   }
 
   // Kütüphanedeki n. avatar (tek numaralar kadın, çift numaralar erkek)
   const seedOf = (n) => (Math.imul(n + 1, 2654435761) ^ 0x51c0ffee) >>> 0;
-  function byId(n, uid = 'lib') { return n >= HUMANS && n < COUNT ? FIG.draw(n - HUMANS) : draw(seedOf(n), n % 2 === 1, uid + n); }
+  function byId(n, uid = 'lib', acc = null) { return n >= HUMANS && n < COUNT ? FIG.draw(n - HUMANS, acc, uid + n) : draw(seedOf(n), n % 2 === 1, uid + n, acc); }
   // seçim penceresi için gruplar
   const groups = () => [{ name: 'İnsanlar', from: 0, to: HUMANS }, { name: 'Hayvanlar', from: HUMANS, to: HUMANS + LIST_N('animal') }, { name: 'Kostümler', from: HUMANS + LIST_N('animal'), to: COUNT }];
   const LIST_N = (k) => { let c = 0; for (let i = 0; i < FIG.COUNT; i++) if (FIG.kindOf(i) === k) c++; return c; };
-  function svg(seed, { female = false, uid = 'av' } = {}) { return draw(seed, female, uid); }
+  function svg(seed, { female = false, uid = 'av', acc = null } = {}) { return draw(seed, female, uid, acc); }
   return { COUNT, byId, svg, groups };
 })();

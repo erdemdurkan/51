@@ -202,11 +202,39 @@ const Figures = (() => {
   const LIST = [];
   for (const [kind, arr] of [['animal', ANIMALS], ['costume', COSTUMES]]) arr.forEach((f, i) => f.v.forEach((_, v) => LIST.push({ kind, i, v })));
   const SKINS = [['#f0c8a0', '#cf9a6e'], ['#cf9a68', '#a26a3e'], ['#8a5a36', '#5e3a1e']];
-  function draw(n) {
+  // Aksesuarların oturacağı yüz noktaları (göz arası yarısı ex, göz y ey, cam yarıçapı er, ağız mx/my, kulak earX/earY, baş üstü top, baş yarı eni hw)
+  const ANCH = {
+    Kedi: { ey: 44, ex: 9, er: 5, mx: 52, my: 56, earX: 21, earY: 52, top: 25, hw: 22 },
+    Tilki: { ey: 44, ex: 9, er: 4.6, mx: 52, my: 64, earX: 22, earY: 52, top: 27, hw: 24 },
+    'Ayı': { ey: 42, ex: 9, er: 5, mx: 53, my: 58, earX: 22, earY: 50, top: 24, hw: 23 },
+    Panda: { ey: 43, ex: 9.5, er: 6, mx: 53, my: 57, earX: 22, earY: 50, top: 25, hw: 23 },
+    'Tavşan': { ey: 46, ex: 8, er: 5, mx: 52, my: 60, earX: 20, earY: 55, top: 30, hw: 21 },
+    'Baykuş': { ey: 44, ex: 11, er: 10, mx: 52, my: 58, earX: 23, earY: 55, top: 25, hw: 24 },
+    Aslan: { ey: 43, ex: 8, er: 4.6, mx: 52, my: 57, earX: 19, earY: 52, top: 22, hw: 21 },
+    'Köpek': { ey: 42, ex: 8, er: 4.8, mx: 53, my: 59, earX: 26, earY: 56, top: 24, hw: 21 },
+    Penguen: { ey: 44, ex: 7, er: 4.5, mx: 53, my: 54, earX: 21, earY: 52, top: 22, hw: 22 },
+    Maymun: { ey: 44, ex: 7, er: 4.5, mx: 55, my: 61, earX: 23, earY: 50, top: 22, hw: 22 },
+    Kaplan: { ey: 44, ex: 9, er: 5, mx: 53, my: 57, earX: 22, earY: 52, top: 25, hw: 23 },
+    'Kurbağa': { ey: 34, ex: 12, er: 7, mx: 58, my: 58, earX: 24, earY: 55, top: 24, hw: 25 },
+    Ninja: { ey: 46, ex: 8, er: 4.6, mx: 54, my: 57, earX: 20, earY: 52, top: 21 },
+    'Astronot': { ey: 48, ex: 6, er: 3.8, mx: 53, my: 58, earX: 28, earY: 52, top: 19, hw: 24 },
+    Korsan: { top: 13, hw: 22 },
+    'Şövalye': { ey: 44.5, ex: 9, er: 5, mx: 54, my: 60, earX: 22, earY: 56, top: 20, hw: 22 },
+    'Büyücü': { top: 4, hw: 16 },
+    Robot: { ey: 42.5, ex: 8, er: 5.5, mx: 56, my: 57.5, earX: 25, earY: 46, top: 21, hw: 23 },
+    Vampir: { ey: 47, top: 20 },
+    Mumya: { top: 23 },
+    'Süper kahraman': { ey: 44.5, top: 19 },
+    Kovboy: { top: 14, hw: 22 },
+    'Uzaylı': { ey: 44, ex: 11, er: 8, mx: 55, my: 60.5, earX: 26, earY: 50, top: 18, hw: 26 },
+    'Maske balosu': { ey: 44, ex: 9, er: 5.5, top: 19 },
+  };
+  function draw(n, acc = null, uid = 'fg') {
     const it = LIST[n];
     const f = (it.kind === 'animal' ? ANIMALS : COSTUMES)[it.i];
     const inner = f.draw(f.v[it.v], SKINS[(it.i + it.v) % SKINS.length] || skinF);
-    return `<svg viewBox="0 0 100 100" aria-hidden="true">${inner}</svg>`;
+    const extra = acc && typeof Acc !== 'undefined' ? Acc.render(acc, ANCH[f.name], uid) : '';
+    return `<svg viewBox="0 0 100 100" aria-hidden="true">${inner}${extra}</svg>`;
   }
   const nameOf = (n) => { const it = LIST[n]; return (it.kind === 'animal' ? ANIMALS : COSTUMES)[it.i].name; };
   return { COUNT: LIST.length, draw, nameOf, kindOf: (n) => LIST[n].kind };

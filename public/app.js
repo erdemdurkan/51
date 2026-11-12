@@ -1183,7 +1183,15 @@ document.body.classList.toggle('p3d', false);
 function mountPlayer(r, seat, name, turn, cols) {
   playerCard(r === 0 ? 'me' : PL[r], seat, name, turn, cols.length);
 }
-// Oyuncu kartı: yuvarlak vesikalık portre + isim, altın, oyun puanı, kağıt sayısı
+// Oturan oyuncunun figürü (aksesuarlarıyla). preview: dükkânda denenen ek aksesuar
+function figureSvg(seat, uid, preview = null) {
+  const p = S.seats[seat];
+  const name = p ? p.name : '?';
+  const av = p && Number.isInteger(p.avatar) ? p.avatar : null;
+  const acc = { ...((S.acc && S.acc[seat]) || {}), ...(preview || {}) };
+  return av != null ? Avatar.byId(av, uid, acc) : Avatar.svg(strHash(name || '?'), { female: Stage3D.isFemaleName(name), uid, acc });
+}
+// Oyuncu kartı: figür + isim, altın, oyun puanı, kağıt sayısı
 function playerCard(slot, seat, name, turn, nCards) {
   const host = $('pl-' + slot);
   if (!host) return;
@@ -1192,14 +1200,13 @@ function playerCard(slot, seat, name, turn, nCards) {
   const seed = strHash(name || '?');
   // seçtiği avatar varsa kütüphaneden, yoksa isminden türetilen portre
   const av = p && Number.isInteger(p.avatar) ? p.avatar : null;
-  const key = av != null ? 'a' + av : 's' + seed;
+  const acc = (S.acc && S.acc[seat]) || {};
+  const key = (av != null ? 'a' + av : 's' + seed) + JSON.stringify(acc);
   if (host.dataset.seed !== key) {
     host.dataset.seed = key;
-    const female = Stage3D.isFemaleName ? Stage3D.isFemaleName(name) : false;
-    const pic = av != null ? Avatar.byId(av, 'av' + slot) : Avatar.svg(seed, { female, uid: 'av' + slot });
-    host.innerHTML = `<div class="pcard"><div class="pav"${slot === 'me' ? ' title="Profil resmini değiştir"' : ''}>${pic}${slot === 'me' ? '<span class="pav-edit">✎</span>' : ''}</div>
+    host.innerHTML = `<div class="pcard" title="${slot === 'me' ? 'Aksesuar al / profil resmi' : 'Hediye gönder'}"><div class="pav">${figureSvg(seat, 'av' + slot)}${slot === 'me' ? '<span class="pav-edit">✎</span>' : ''}</div>
       <div class="pinf"><div class="pn"></div><div class="pg"></div><div class="ps"></div><div class="pc"></div></div></div>`;
-    if (slot === 'me') host.querySelector('.pcard').onclick = openAvatarPicker;
+    host.querySelector('.pcard').onclick = () => openShop(seat);
   }
   const tot = totalsOf()[seat];
   const team = g.mode === 'team' && slot !== 'me' ? (seat % 2 === S.mySeat % 2 ? ' <span class="ptag partner">Eşin</span>' : ' <span class="ptag">Rakip</span>') : '';
@@ -2264,3 +2271,69 @@ function openWallPicker() {
 }
 $('btnWall').onclick = openWallPicker;
 applyWall(wallId);
+
+// ---------- Aksesuar dükkânı: kendine al ya da masadakine hediye et (o oyun boyunca takılı) ----------
+const seatSlot = (seat) => (seat === S.mySeat ? 'me' : PL[(seat - S.mySeat + 4) % 4]);
+function openShop(seat) {
+  if (!S || !S.seats[seat]) return;
+  const mine = seat === S.mySeat;
+  const p = S.seats[seat];
+  const cur = (S.acc && S.acc[seat]) || {};
+  const tiles = Acc.ITEMS.map((it) => {
+    const on = cur[it.slot] === it.id;
+    const poor = (myGold || 0) < it.price;
+    // her kutucukta figür o aksesuarla birlikte görünür
+    return `<button class="shi${on ? ' on' : ''}${poor && !on ? ' poor' : ''}" data-id="${it.id}"${on ? ' disabled' : ''}>
+      <span class="shf">${figureSvg(seat, 'sh' + seat + it.id, { [it.slot]: it.id })}</span>
+      <span class="shn">${it.icon} ${it.name}</span>
+      <span class="shp">${on ? (mine ? 'Takılı' : 'Onda var') : '🪙 ' + fmt(it.price)}</span></button>`;
+  }).join('');
+  modalKind = 'shop';
+  $('modalBody').innerHTML = `<div class="shop"><h2>${mine ? 'Kendine aksesuar al' : `${esc(p.name)} için hediye seç`}</h2>
+    <p class="muted">Altının: <b>🪙 ${fmt(myGold || 0)}</b> · Aksesuarlar bu oyun boyunca takılı kalır.${mine ? '' : ' Hediyeyi masadaki herkes görür.'}</p>
+    <div class="shgrid">${tiles}</div>
+    <div class="mbtns">${mine ? '<button id="shAv">🖼 Profil resmini değiştir</button>' : ''}<button id="shClose">Kapat</button></div></div>`;
+  $('modal').classList.remove('hidden');
+  $('shClose').onclick = closeModal;
+  if (mine) $('shAv').onclick = () => { closeModal(); openAvatarPicker(); };
+  $('modalBody').querySelectorAll('.shi:not(.on)').forEach((b) => {
+    b.onclick = () => {
+      const it = Acc.byId[b.dataset.id];
+      if ((myGold || 0) < it.price) { toast(`Yeterli altının yok (${it.price} altın gerekli)`); FX.play('error'); return; }
+      emit('gift', { toSeat: seat, item: it.id }, (res) => { setGold(res.gold); closeModal(); });
+    };
+  });
+}
+// Hediye uçar: gönderenin figüründen alanın figürüne (kendine aldıysa yerinde parlar)
+socket.on('giftFx', ({ from, to, item }) => {
+  if (!S) return;
+  const it = Acc.byId[item];
+  if (!it) return;
+  const pav = (seat) => document.querySelector(`#pl-${seatSlot(seat)} .pav`);
+  const a = pav(from);
+  const b = pav(to);
+  const nm = (s) => (s === S.mySeat ? 'Sen' : nameOf(s));
+  toast(from === to ? `${nm(from)} kendine ${it.name.toLocaleLowerCase('tr')} aldı ${it.icon}` : `${nm(from)} → ${to === S.mySeat ? 'sana' : nameOf(to)}: ${it.name} ${it.icon}`);
+  FX.play('place');
+  const pop = () => {
+    const t = pav(to); // figür yeniden çizilmiş olabilir
+    if (!t) return;
+    t.classList.remove('gift-pop');
+    void t.offsetWidth;
+    t.classList.add('gift-pop');
+    setTimeout(() => t.classList.remove('gift-pop'), 900);
+  };
+  if (!a || !b || from === to) { pop(); return; }
+  const ra = a.getBoundingClientRect();
+  const rb = b.getBoundingClientRect();
+  const el = document.createElement('div');
+  el.className = 'gift-fly';
+  el.textContent = '🎁';
+  el.style.left = ra.left + ra.width / 2 + 'px';
+  el.style.top = ra.top + ra.height / 2 + 'px';
+  document.body.appendChild(el);
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    el.style.transform = `translate(${rb.left + rb.width / 2 - (ra.left + ra.width / 2)}px, ${rb.top + rb.height / 2 - (ra.top + ra.height / 2)}px) scale(1.3)`;
+  }));
+  setTimeout(() => { el.remove(); pop(); }, 800);
+});

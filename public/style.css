@@ -1575,3 +1575,23 @@ body.flat .pinf .pn { grid-column: 1 / -1; font-size: 14px; }
 body.flat .pinf .pc { font-size: 12px; }
 body.flat .pl.me#pl-me .pinf { font-size: 12px; }
 body.flat .pl.me#pl-me .pinf .pn { font-size: 14px; }
+/* oyuncu kartına tıklanır: hediye / dükkân */
+body.flat .pl .pcard { pointer-events: auto; cursor: pointer; }
+body.flat .pl .pcard:hover .pinf { border-color: rgba(255,224,138,.7); }
+/* aksesuar dükkânı */
+.modal-card:has(.shop) { max-width: 860px; width: min(860px, 94vw); }
+.shop h2 { margin: 0 0 4px; }
+.shgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin: 12px 0; max-height: 62vh; overflow-y: auto; padding: 2px; }
+.shi { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 6px 10px; border-radius: 14px; background: rgba(255,255,255,.06); border: 2px solid transparent; transition: transform .12s, border-color .12s; }
+.shi:hover:not(:disabled) { transform: translateY(-2px); border-color: #ffe08a; }
+.shi.on { border-color: rgba(110,230,150,.6); opacity: .8; }
+.shi.poor { opacity: .55; }
+.shf { width: 110px; height: 110px; display: block; }
+.shf svg { width: 100%; height: 100%; display: block; }
+.shn { font-weight: 700; font-size: 14px; }
+.shp { font-size: 13px; color: #ffd27a; }
+.shi.on .shp { color: #8fe0a8; }
+/* hediye uçuşu ve gelince parlama */
+.gift-fly { position: fixed; z-index: 2000; font-size: 34px; margin: -20px 0 0 -20px; pointer-events: none; transition: transform .75s cubic-bezier(.3,.7,.3,1); filter: drop-shadow(0 6px 10px rgba(0,0,0,.5)); }
+.pav.gift-pop { animation: giftPop .85s ease-out; }
+@keyframes giftPop { 0% { transform: scale(1); } 35% { transform: scale(1.18); filter: drop-shadow(0 0 18px rgba(255,220,120,1)); } 100% { transform: scale(1); } }
