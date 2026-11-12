@@ -1144,16 +1144,24 @@ function layoutTable() {
   if (narrow) put(ui, W / 2 - ui.offsetWidth / 2, H - hm.offsetHeight - gap - ui.offsetHeight);
   else put(ui, W / 2 + hm.offsetWidth / 2 + gap * 1.5, H - gap / 2 - hm.offsetHeight / 2 - ui.offsetHeight / 2);
   const midY = y0 + AH / 2;
-  put(hosts.left, gap, midY - hosts.left.offsetHeight / 2);
-  put(hosts.right, W - gap - hosts.right.offsetWidth, midY - hosts.right.offsetHeight / 2);
+  // yanlar: üst/alt gibi ortadaki kağıtlara yakın (deste+gösterge solda, yığın sağda)
+  const brx = box.getBoundingClientRect().left;
+  const cL = $('feltBottom').getBoundingClientRect().left - brx;
+  const cR = $('discard').getBoundingClientRect().right - brx;
+  const G = narrow ? 8 : 48;
+  // telefonda yer dar: yanlar ekran kenarında kalır
+  const lx = narrow ? gap : Math.max(gap, cL - G - hosts.left.offsetWidth);
+  const rx = narrow ? W - gap - hosts.right.offsetWidth : Math.min(W - gap - hosts.right.offsetWidth, cR + G);
+  put(hosts.left, lx, midY - hosts.left.offsetHeight / 2);
+  put(hosts.right, rx, midY - hosts.right.offsetHeight / 2);
 
   // kapalı elleri: üsttekininki kartın sağında, yanlarınki kartın altında
   const ot = $('opp-top');
   const ol = $('opp-left');
   const or = $('opp-right');
   put(ot, W / 2 + ht.offsetWidth / 2 + 14, tY + ht.offsetHeight / 2 - ot.offsetHeight / 2);
-  put(ol, gap + hosts.left.offsetWidth / 2 - ol.offsetWidth / 2, midY + hosts.left.offsetHeight / 2 + 8);
-  put(or, W - gap - hosts.right.offsetWidth / 2 - or.offsetWidth / 2, midY + hosts.right.offsetHeight / 2 + 8);
+  put(ol, lx + hosts.left.offsetWidth / 2 - ol.offsetWidth / 2, midY + hosts.left.offsetHeight / 2 + 8);
+  put(or, rx + hosts.right.offsetWidth / 2 - or.offsetWidth / 2, midY + hosts.right.offsetHeight / 2 + 8);
 }
 
 // Bu elde oynayanlar arasında benden önceki oyuncu (finalde 2 kişi)
