@@ -21,7 +21,7 @@
  },
  "bf264ccc3d7b14382b44e25883dbe6a6": {
   "name": "Erdem",
-  "gold": 3120,
+  "gold": 3080,
   "created": 1794090016846,
   "lastDaily": "2026-11-12",
   "streak": 2,
@@ -32,8 +32,8 @@
     "until": 1794595125460
    },
    "gag": {
-    "id": "palyaco",
-    "until": 1794596978384
+    "id": "uyku",
+    "until": 1794597008101
    }
   }
  },
@@ -682,10 +682,16 @@
  },
  "0775f5571c2e17a7657d7eb8d037a7ee": {
   "name": "Erdem",
-  "gold": 0,
+  "gold": 920,
   "created": 1794507182626,
-  "streak": 0,
-  "lastDaily": null
+  "streak": 1,
+  "lastDaily": "2026-11-12",
+  "acc": {
+   "gag": {
+    "id": "palyaco",
+    "until": 1794597015141
+   }
+  }
  },
  "f72d8d223df6c13312dffda631e176d1": {
   "name": "Erdem",
