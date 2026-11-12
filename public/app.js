@@ -524,11 +524,14 @@ function meldOk(cards) {
   if (!nat.length) return false;
   if (cards.length <= 4 && nat.every((c) => c.r === nat[0].r) && new Set(nat.map((c) => c.s)).size === nat.length) return true;
   if (!nat.every((c) => c.s === nat[0].s)) return false;
-  const rs = nat.map((c) => c.r).sort((a, b) => a - b);
-  if (new Set(rs).size !== rs.length) return false;
-  const gaps = rs[rs.length - 1] - rs[0] + 1 - rs.length;
-  if (gaps > w) return false;
-  return w - gaps <= rs[0] - 2 + (14 - rs[rs.length - 1]);
+  // Seri per: kağıtlar dizildiği sırayla ardışık olmalı (7-8-9 ya da 9-8-7);
+  // okey, eksik kağıdın tam yerinde durur. 8-9-7 ya da 7-9-8 per değildir.
+  const seq = cards.map((c) => (isWild(c, okey) ? null : c.joker ? okey.r : c.r));
+  const i0 = seq.findIndex((r) => r != null);
+  return [1, -1].some((d) => seq.every((r, j) => {
+    const want = seq[i0] + d * (j - i0);
+    return want >= 2 && want <= 14 && (r == null || r === want);
+  }));
 }
 function pairOk([a, b]) {
   const okey = S.game.okey;
