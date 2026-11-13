@@ -178,6 +178,12 @@ function backEl(color, count) {
 }
 
 // ---------- Giriş ----------
+const FEES_ON = false; // Masa giriş ücreti şimdilik kapalı (server.js'teki FEES_ON ile birlikte açılır)
+if (!FEES_ON) {
+  document.querySelectorAll('#fee, #lFee').forEach((i) => (i.closest('label').style.display = 'none'));
+  const note = document.querySelector('.small-note');
+  if (note) note.textContent = 'Online masalar şimdilik ücretsiz.';
+}
 fillHands($('hands'));
 fillHands($('lHands'));
 $('name').value = store.get('i51-name') || '';
@@ -203,9 +209,9 @@ $('btnBots').onclick = () => {
 $('btnCreate').onclick = () => {
   const name = myName();
   if (!name) return;
-  const fee = Math.floor(+$('fee').value || 0);
-  if (fee < 250) { toast('Masa ücreti en az 250 altın olmalı'); $('fee').focus(); return; }
-  if (myGold != null && fee > myGold) { toast(`Yeterli altının yok (${fmt(myGold)} altın)`); return; }
+  const fee = FEES_ON ? Math.floor(+$('fee').value || 0) : 0;
+  if (FEES_ON && fee < 250) { toast('Masa ücreti en az 250 altın olmalı'); $('fee').focus(); return; }
+  if (FEES_ON && myGold != null && fee > myGold) { toast(`Yeterli altının yok (${fmt(myGold)} altın)`); return; }
   emit('create', { name, pid, mode: $('mode').value, totalHands: +$('hands').value, fee }, setSession);
 };
 $('fee').addEventListener('keydown', (e) => e.key === 'Enter' && $('btnCreate').click());
@@ -323,7 +329,9 @@ function renderLobby() {
   $('lMode').disabled = $('lHands').disabled = $('lFee').disabled = !S.isHost;
   const full = S.seats.every(Boolean);
   const hasBot = S.seats.some((p) => p && p.bot);
-  $('lobbyMoney').innerHTML = hasBot || !S.settings.fee
+  $('lobbyMoney').innerHTML = !hasBot && !S.settings.fee
+    ? '🎉 Masa ücreti şimdilik yok: <b>ücretsiz</b> oyun.'
+    : hasBot || !S.settings.fee
     ? '🤖 Masada bilgisayar var: <b>ücretsiz</b> oyun, altın kullanılmaz.'
     : `🪙 Masa ücreti <b>${fmt(S.settings.fee)}</b> altın · Yerde toplanacak: <b>${fmt(S.settings.fee * 4)}</b><br>
        1.: ${fmt(S.settings.fee * 2)} · 2.: ${fmt(S.settings.fee)} · Final kazananı: ${fmt(S.settings.fee)} · Final kaybedeni: 0`;

@@ -28,6 +28,7 @@ const HAND_OPTIONS = [3, 5, 7, 9, 11];
 // ---------- Sanal altın: oyuncu profilleri (data/players.json) ----------
 const START_GOLD = 1000;
 const MIN_FEE = 250;
+const FEES_ON = false; // Masa giriş ücreti şimdilik kapalı (açmak için true)
 const DATA_DIR = path.join(__dirname, 'data');
 const PLAYERS_FILE = path.join(DATA_DIR, 'players.json');
 let players = {};
@@ -332,8 +333,8 @@ io.on('connection', (socket) => {
   handle('create', ({ name, mode, totalHands, vsBots, fee, pid }) => {
     pid = ensureProfile(pid, name);
     socket.data.pid = pid;
-    fee = vsBots ? 0 : cleanFee(fee);
-    if (!vsBots) {
+    fee = vsBots || !FEES_ON ? 0 : cleanFee(fee);
+    if (!vsBots && FEES_ON) {
       if (fee < MIN_FEE) throw new Error(`Masa ücreti en az ${MIN_FEE} altın olmalı.`);
       if (goldOf(pid) < fee) throw new Error(`Yeterli altının yok (${goldOf(pid)} altın).`);
     }
@@ -409,7 +410,7 @@ io.on('connection', (socket) => {
     const { room } = ctx();
     if (socket.data.token !== room.hostToken) throw new Error('Sadece oda sahibi değiştirebilir.');
     if (room.game) throw new Error('Oyun başladı.');
-    if (fee != null) {
+    if (fee != null && FEES_ON) {
       fee = cleanFee(fee);
       if (fee < MIN_FEE) throw new Error(`Masa ücreti en az ${MIN_FEE} altın olmalı.`);
       room.settings.fee = fee;
