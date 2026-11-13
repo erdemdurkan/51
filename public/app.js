@@ -2427,3 +2427,18 @@ socket.on('giftFx', ({ from, to, item }) => {
   }));
   setTimeout(() => { el.remove(); pop(); }, 800);
 });
+
+// ---------- FPS göstergesi (sağ altta): saniyede çizilen kare ----------
+(() => {
+  const el = document.createElement('div');
+  el.id = 'fps';
+  el.textContent = 'FPS –';
+  document.body.appendChild(el);
+  let n = 0, t = performance.now();
+  const tick = (now) => {
+    n++;
+    if (now - t >= 500) { el.textContent = 'FPS ' + Math.round((n * 1000) / (now - t)); n = 0; t = now; }
+    requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+})();
